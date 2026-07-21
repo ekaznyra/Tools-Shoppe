@@ -602,35 +602,21 @@ export async function findBestVouchersForProductLink(productUrl: string) {
   const validVouchers = allVouchers.filter((v) => !v.endTime || new Date(v.endTime) >= now);
   if (validVouchers.length === 0) return null;
 
-  // 2. Sắp xếp ưu tiên mã giảm nhiều tiền nhất (discountAmountValue giảm từ cao xuống thấp)
-  validVouchers.sort((a, b) => {
-    if (b.discountAmountValue !== a.discountAmountValue) {
-      return b.discountAmountValue - a.discountAmountValue;
-    }
-    return b.score - a.score;
-  });
+  // 2. Phân loại mã cho Đơn Nhỏ (< 400k) và Đơn Lớn (>= 400k)
+  const smallOrderVouchers = validVouchers.filter((v) => v.minSpendValue < 400000);
+  const largeOrderVouchers = validVouchers.filter((v) => v.minSpendValue >= 400000);
 
-  // 3. Phân loại mã phù hợp riêng shop hoặc mã toàn sàn ngon nhất
-  let matched = validVouchers.filter((v) => {
-    if (!v.shopName && !v.title) return false;
-    const sName = (v.shopName || '').toLowerCase();
-    const sTitle = (v.title || '').toLowerCase();
-    return cleanUrl.includes(sName) || cleanUrl.includes(sTitle);
-  });
+  // Sắp xếp mã theo mức giảm tốt nhất
+  smallOrderVouchers.sort((a, b) => b.discountAmountValue - a.discountAmountValue || b.score - a.score);
+  largeOrderVouchers.sort((a, b) => b.discountAmountValue - a.discountAmountValue || b.score - a.score);
 
-  if (matched.length === 0) {
-    matched = validVouchers; // Nếu không có mã riêng shop, lấy danh sách mã giảm sâu nhất toàn sàn
-  }
-
-  const bestVoucher = matched[0];
-  const runnerUp = matched.length > 1 ? matched[1] : null;
-  const thirdPlace = matched.length > 2 ? matched[2] : null;
+  const bestForSmallOrder = smallOrderVouchers.length > 0 ? smallOrderVouchers[0] : validVouchers[0];
+  const bestForLargeOrder = largeOrderVouchers.length > 0 ? largeOrderVouchers[0] : validVouchers[0];
 
   return {
-    bestVoucher,
-    runnerUp,
-    thirdPlace,
-    totalAvailable: matched.length,
+    bestForSmallOrder,
+    bestForLargeOrder,
+    totalAvailable: validVouchers.length,
   };
 }
 

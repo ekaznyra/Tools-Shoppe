@@ -24,7 +24,7 @@ if not exist shopee_orders.db (
 echo ====================================================
 echo [THONG BAO] BOT DANG HOAT DONG 24/7...
 echo - Trang Web Dashboard: http://localhost:3000
-echo - Tinh nang: Tra cuu van don & Cao Voucher Shopee tu dong
+echo - Tinh nang: Tra cuu van don va Cao Voucher Shopee tu dong
 echo - Che do: Tu dong khoi chay lai khi ngat ket noi
 echo - Nhan Ctrl + C de dung Bot
 echo ====================================================
@@ -33,6 +33,6 @@ echo.
 call npm run bot
 
 echo.
-echo [CANH BAO] Bot ngat ket noi! Tu dong khoi chay lai sau 5s...
-timeout /t 5 >nul
+echo [THONG BAO] Bot tu dong khoi chay lai...
+timeout /t 1 >nul
 goto START_BOT
