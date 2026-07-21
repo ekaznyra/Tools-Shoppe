@@ -41,6 +41,13 @@ export function startWebServer(port: number = Number(PORT)) {
       return;
     }
 
+    // 1b. Health Check Endpoint
+    if (pathname === '/health') {
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ status: 'OK', uptime: process.uptime(), timestamp: new Date().toISOString() }));
+      return;
+    }
+
     // 2. API Sinh Mã QR Code Vector SVG Siêu Sắc Nét
     if (pathname === '/api/qr' && req.method === 'GET') {
       const text = parsedUrl.searchParams.get('text') || parsedUrl.searchParams.get('code') || 'SPXVN000';
