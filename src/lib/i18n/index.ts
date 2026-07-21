@@ -45,7 +45,7 @@ export const i18nDict: Record<SupportedLanguage, Record<string, string>> = {
     watchlistTip: '📌 Mẹo: Gõ /theodoi {code} để tự động nhận thông báo ngay khi bưu cục có cập nhật mới!',
     selectLanguagePrompt: '🌐 VUI LÒNG CHỌN NGÔN NGỮ CỦA BẠN:',
     languageUpdated: '✅ Đã cập nhật ngôn ngữ sang: <b>Tiếng Việt 🇻🇳</b>',
-    helpCommandText: '🤖 <b>DANH SÁCH LỆNH TELEGRAM BOT:</b>\n\n• Gõ Mã Vận Đơn (VD: <code>SPXVN068554112737</code>) để tra cứu nhanh.\n• <code>/lang</code> - Đổi ngôn ngữ (VI, EN, JA, ZH, HI)\n• <code>/theodoi [Mã]</code> - Đăng ký nhận thông báo bưu kiện tự động\n• <code>/danhsach</code> - Xem danh sách vận đơn đang theo dõi\n• <code>/huyleo [Mã]</code> - Hủy nhận thông báo',
+    helpCommandText: '🤖 <b>DANH SÁCH TẤT CẢ CÁC LỆNH TELEGRAM BOT:</b>\n\n<b>📦 1. TRA CỨU & THEO DÕI VẬN ĐƠN:</b>\n• Gõ Mã Vận Đơn (VD: <code>SPXVN068554112737</code>) - Tra cứu nhanh\n• <code>/tracuu [Mã]</code> hoặc <code>/tim [Mã]</code> - Xem chi tiết & dự báo ETA\n• <code>/theodoi [Mã]</code> - Đăng ký tự động theo dõi khi bưu cục đổi kho\n• <code>/danhsach</code> - Xem tất cả mã vận đơn đang theo dõi ngầm\n• <code>/huytheodoi [Mã]</code> - Hủy nhận thông báo cho mã chỉ định\n• <code>/nhackhach [Mã]</code> - Tạo tin mẫu gửi Zalo/SMS nhắc nghe máy\n• <code>/xuatexcel</code> - Tải file Excel báo cáo tra cứu\n• <code>/baocaotudong</code> - Bật/Tắt lịch tự động gửi file Excel (6h/lần)\n\n<b>🎟️ 2. QUÉT & THÔNG BÁO MÃ GIẢM GIÁ SHOPEE:</b>\n• <code>/addshop [URL]</code> - Thêm shop/chiến dịch Shopee cào voucher\n• <code>/removeshop [ID/URL]</code> - Xóa shop khỏi danh sách cào ngầm\n• <code>/listshops</code> - Liệt kê các shop Shopee đang quét ngầm\n• <code>/vouchers</code> hoặc <code>/latest</code> - Xem 5 voucher mới nhất\n• <code>/today</code> - Xem voucher phát hiện trong ngày hôm nay\n• <code>/hot</code> hoặc <code>/mahot</code> - Xem TOP voucher HOT nhất sàn (Ranking Engine)\n• <code>/timma [tên_sp]</code> - Tìm mã giảm giá theo tên sản phẩm/shop\n• <code>/filter min=50k maxspend=500k</code> - Cấu hình bộ lọc voucher\n• <code>/pause</code> / <code>/resume</code> - Tạm dừng hoặc Bật lại thông báo voucher\n\n<b>⚙️ 3. CÀI ĐẶT & HỆ THỐNG:</b>\n• <code>/lang</code> - Đổi ngôn ngữ (VI, EN, JA, ZH, HI)\n• <code>/trangthai</code> - Kiểm tra trạng thái máy chủ & bộ nhớ\n• <code>/huongdan</code> hoặc <code>/help</code> - Xem bảng menu này',
     viewTimeline: '📜 Xem Lịch Sử Hành Trình Chi Tiết',
     hideTimeline: '🔼 Ẩn Lịch Sử Hành Trình',
     orderCardTitle: '✨ THÔNG TIN CHI TIẾT ĐƠN HÀNG & SẢN PHẨM',
@@ -55,6 +55,8 @@ export const i18nDict: Record<SupportedLanguage, Record<string, string>> = {
     filterShipping: '🚚 Đang Giao',
     filterDelivered: '✅ Thành Công',
     filterAlert: '🚨 Cảnh Báo',
+    voucherTitle: '🎟️ MÃ GIẢM GIÁ SHOPEE MỚI',
+    voucherListTitle: '🎟️ DANH SÁCH VOUCHER MỚI NHẤT',
   },
   en: {
     appTitle: 'Automatic Waybill Tracking System',

@@ -19,12 +19,13 @@ Hệ thống tra cứu, dự báo thời gian giao hàng và tự động theo d
 ## 🌟 CÁC TÍNH NĂNG NỔI BẬT
 
 1. **Tra cứu đa kênh siêu tốc**: Hỗ trợ SPX Express, GHTK, GHN, Viettel Post, Ninja Van.
-2. **VPS High-Performance Ready**: Tận dụng 32 CPU Cores & 96GB RAM, xử lý song song 16 luồng cùng lúc.
-3. **Bộ nhớ đệm RAM 10 phút**: Trả kết quả tức thì trong **0.001s**.
-4. **Tự động theo dõi 24/7 (`/theodoi`)**: Phát báo động về Telegram ngay khi bưu kiện đổi kho.
-5. **Dự báo giao hàng (ETA Predictor)**: Dự đoán ngày/giờ bưu kiện tới tay người nhận.
-6. **Mẫu tin nhắn nhắc nghe máy (`/nhackhach`)**: Tạo nhanh mẫu tin nhắn gửi Zalo/SMS cho người nhận.
-7. **Trang Quản Trị Web (`http://localhost:3000`)**: Giao diện Web Dark Mode chuyên nghiệp.
+2. **Tự động theo dõi bưu kiện 24/7 (`/theodoi`)**: Tự động thông báo Telegram ngay khi bưu kiện đổi bưu cục/chuyển kho.
+3. **Quét & Cào Voucher Shopee Tự Động**: Tự động quét mã giảm giá công khai từ các shop Shopee hoặc chiến dịch.
+4. **Ranking Engine (Chấm điểm Voucher)**: Chấm điểm chất lượng voucher (0-100+ điểm) và lọc ra mã HOT nhất.
+5. **Affiliate Deep-Link Engine**: Tự động tạo link Affiliate (AccessTrade / Shopee Affiliate) giúp mở app Shopee trực tiếp & kiếm hoa hồng.
+6. **Bộ lọc thông minh (`/filter`)**: Lọc voucher theo mức giảm tối thiểu và đơn tối thiểu.
+7. **Dự báo giao hàng (ETA Predictor)**: Dự đoán thời gian bưu kiện đến tay người nhận.
+8. **Trang Quản Trị Web (`http://localhost:3000`)**: Giao diện Web Dashboard Dark Mode kính Glassmorphism sang trọng.
 
 ---
 
@@ -42,18 +43,46 @@ chmod +x CHAY_BOT.sh
 
 ---
 
-## 📜 LỆNH TELEGRAM BOT (100% TIẾNG VIỆT)
+## 📖 HƯỚNG DẪN SỬ DỤNG TẤT CẢ CÁC LỆNH TELEGRAM BOT
 
-- `/tracuu <mã>` hoặc `/tim <mã>` : Tra cứu hành trình vận đơn
-- `/theodoi <mã>` : Thêm mã vào danh sách Tự Động Theo Dõi 24/7
-- `/danhsach` : Xem các mã đang tự động theo dõi
-- `/huytheodoi <mã>` : Hủy theo dõi mã vận đơn
-- `/nhackhach <mã>` : Tạo tin nhắn mẫu nhắc nghe máy
-- `/xuatexcel` : Xuất file Excel báo cáo
-- `/baocaotudong` : Bật/Tắt gửi file Excel tự động 6h/lần
-- `/trangthai` : Kiểm tra trạng thái hệ thống
-- `/huongdan` : Xem menu hướng dẫn
+### 📦 nhóm 1: TRA CỨU & THEO DÕI VẬN ĐƠN (PARCEL TRACKING)
+| Lệnh Telegram | Cú pháp ví dụ | Mô tả chức năng |
+|---|---|---|
+| `Gõ thẳng Mã Vận Đơn` | `SPXVN068554112737` | Tra cứu hành trình vận đơn tức thì |
+| `/tracuu` hoặc `/tim` | `/tracuu SPXVN068554112737` | Tra cứu hành trình vận đơn SPX, GHTK, GHN... |
+| `/theodoi` hoặc `/watch` | `/theodoi SPXVN068554112737` | Đăng ký tự động theo dõi bưu kiện (báo tin ngầm khi đổi kho) |
+| `/danhsach` hoặc `/watchlist` | `/danhsach` | Xem danh sách tất cả mã vận đơn đang tự động theo dõi |
+| `/huytheodoi` hoặc `/unwatch` | `/huytheodoi SPXVN068554112737` | Hủy đăng ký nhận thông báo bưu kiện |
+| `/nhackhach` hoặc `/remind` | `/nhackhach SPXVN068554112737` | Tạo nhanh mẫu tin nhắn gửi Zalo/SMS nhắc người nhận nghe máy |
+| `/xuatexcel` hoặc `/export` | `/xuatexcel` | Xuất file Báo cáo Excel lịch sử tra cứu |
+| `/baocaotudong` | `/baocaotudong` | Bật/Tắt lịch tự động gửi file Excel báo cáo định kỳ 6h/lần |
+
+---
+
+### 🎟️ Nhóm 2: QUÉT & THÔNG BÁO MÃ GIẢM GIÁ SHOPEE (VOUCHER SCANNER)
+| Lệnh Telegram | Cú pháp ví dụ | Mô tả chức năng |
+|---|---|---|
+| `/addshop` hoặc `/themshop` | `/addshop https://shopee.vn/tu_store` | Thêm shop hoặc chiến dịch Shopee cần theo dõi quét mã |
+| `/removeshop` hoặc `/xoashop` | `/removeshop tu_store` | Xóa shop khỏi danh sách quét voucher |
+| `/listshops` hoặc `/dsshops` | `/listshops` | Xem danh sách các shop Shopee đang được quét ngầm |
+| `/vouchers` hoặc `/latest` | `/vouchers` | Xem 5 voucher mới nhất vừa tìm thấy |
+| `/today` hoặc `/homnay` | `/today` | Xem danh sách voucher mới phát hiện trong ngày hôm nay |
+| `/hot` hoặc `/mahot` | `/hot` | Xem TOP voucher HOT nhất sàn (Xếp hạng bởi Ranking Engine) |
+| `/timma` hoặc `/searchproduct` | `/timma tu_store` | Tìm kiếm voucher phù hợp theo tên sản phẩm hoặc tên shop |
+| `/filter` hoặc `/boloc` | `/filter min=50k maxspend=500k` | Cài đặt bộ lọc voucher (chỉ nhận tin giảm từ 50k, đơn tối đa 500k) |
+| `/pause` hoặc `/tamdung` | `/pause` | Tạm dừng nhận tin nhắn thông báo voucher tự động |
+| `/resume` hoặc `/batlai` | `/resume` | Bật lại thông báo voucher tự động |
+
+---
+
+### ⚙️ Nhóm 3: CÀI ĐẶT & HỆ THỐNG
+| Lệnh Telegram | Cú pháp ví dụ | Mô tả chức năng |
+|---|---|---|
+| `/lang` hoặc `/language` | `/lang` | Đổi ngôn ngữ hiển thị (Tiếng Việt 🇻🇳, English 🇺🇸, 日本語 🇯🇵, 中文 🇨🇳, हिन्दी 🇮🇳) |
+| `/trangthai` hoặc `/status` | `/trangthai` | Kiểm tra trạng thái hoạt động máy chủ & thông số kỹ thuật |
+| `/help` hoặc `/huongdan` | `/help` | Hiển thị bảng menu hướng dẫn tất cả các lệnh |
 
 ---
 
 **Copyright © 2026 Kaze. All rights reserved.**
+

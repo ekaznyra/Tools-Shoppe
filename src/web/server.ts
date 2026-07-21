@@ -7,6 +7,15 @@ import { trackUniversalWaybill } from '../lib/multi-carrier-tracker/index.ts';
 import { trackMultipleSPXWaybills, extractWaybillsFromText } from '../lib/spx-tracker/index.ts';
 import { analyzeDeliveryAlerts } from '../lib/alert-scanner/index.ts';
 import { generateQRCodeSVG } from '../lib/qr-generator/index.ts';
+import {
+  getLatestVouchers,
+  getHotVouchers,
+  getShopTargets,
+  addShopTarget,
+  removeShopTarget,
+  scanVouchersFromUrl,
+  saveDiscoveredVouchers,
+} from '../lib/voucher-scanner/index.ts';
 import { logger } from '../lib/logging/index.ts';
 
 const PORT = process.env.PORT || 3000;
@@ -176,6 +185,98 @@ export function startWebServer(port: number = Number(PORT)) {
       }
       return;
     }
+
+    // 8. API Lấy Danh Sách Voucher Shopee
+    if (pathname === '/api/vouchers' && req.method === 'GET') {
+      try {
+        const vouchers = await getLatestVouchers(50);
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: true, vouchers }));
+      } catch (e: any) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, errorMessage: e.message }));
+      }
+      return;
+    }
+
+    if (pathname === '/api/vouchers/hot' && req.method === 'GET') {
+      try {
+        const vouchers = await getHotVouchers(20);
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: true, vouchers }));
+      } catch (e: any) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, errorMessage: e.message }));
+      }
+      return;
+    }
+
+    // 9. API Lấy Danh Sách & Quản Lý Shop Theo Dõi Voucher
+    if (pathname === '/api/voucher-shops') {
+      if (req.method === 'GET') {
+        try {
+          const shops = await getShopTargets();
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ success: true, shops }));
+        } catch (e: any) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, errorMessage: e.message }));
+        }
+        return;
+      }
+
+      if (req.method === 'POST') {
+        let body = '';
+        req.on('data', (chunk) => (body += chunk));
+        req.on('end', async () => {
+          try {
+            const parsed = JSON.parse(body || '{}');
+            const shopUrl = parsed.shopUrl;
+            if (!shopUrl) {
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, errorMessage: 'Thiếu shopUrl' }));
+              return;
+            }
+
+            const shop = await addShopTarget(shopUrl, 'WEB_UI');
+            const rawVouchers = await scanVouchersFromUrl(shop.shopUrl);
+            const newVouchers = await saveDiscoveredVouchers(rawVouchers);
+
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ success: true, shop, newVouchersFound: newVouchers.length }));
+          } catch (e: any) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, errorMessage: e.message }));
+          }
+        });
+        return;
+      }
+
+      if (req.method === 'DELETE') {
+        let body = '';
+        req.on('data', (chunk) => (body += chunk));
+        req.on('end', async () => {
+          try {
+            const parsed = JSON.parse(body || '{}');
+            const shopId = parsed.shopId || parsed.shopUrl;
+            if (!shopId) {
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, errorMessage: 'Thiếu shopId' }));
+              return;
+            }
+
+            const ok = await removeShopTarget(shopId);
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ success: ok }));
+          } catch (e: any) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, errorMessage: e.message }));
+          }
+        });
+        return;
+      }
+    }
+
 
     // 404 Route
     res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });

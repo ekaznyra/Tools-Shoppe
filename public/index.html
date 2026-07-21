@@ -45,8 +45,8 @@
 
     /* Keyframe Animations */
     @keyframes floatIcon {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-5px); }
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-7px) rotate(4deg); }
     }
 
     @keyframes spinSlow {
@@ -55,15 +55,55 @@
     }
 
     @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-12px); }
+      from { opacity: 0; transform: translateY(-16px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes pulseAlert {
       0% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
-      50% { box-shadow: 0 0 22px rgba(239, 68, 68, 0.8); }
+      50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.8); }
       100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
     }
+
+    @keyframes hotGlow {
+      0% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.4); border-color: rgba(245, 158, 11, 0.6); }
+      50% { box-shadow: 0 0 22px rgba(239, 68, 68, 0.8); border-color: rgba(239, 68, 68, 0.9); }
+      100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.4); border-color: rgba(245, 158, 11, 0.6); }
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Toast Notification Container */
+    #toastContainer {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 100000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast-item {
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid var(--primary);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 14px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(12px);
+      animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
 
     header {
       display: flex;
@@ -551,6 +591,7 @@
   </style>
 </head>
 <body>
+  <div id="toastContainer"></div>
   <div class="container">
     <header>
       <div class="logo-box">
@@ -690,7 +731,51 @@
         </div>
       </div>
     </div>
+
+    <!-- Voucher Shopee Scanner Dashboard Section -->
+    <div class="section-card" style="margin-top: 24px;">
+      <div class="section-title">
+        <div><span>🎟️</span> <span>Quản Lý & Cào Mã Giảm Giá Shopee</span></div>
+        <button class="btn btn-secondary" onclick="loadVoucherDashboard()" style="padding: 6px 12px; font-size: 12px;">
+          🔄 Cập nhật Voucher
+        </button>
+      </div>
+
+      <!-- Add Shop Form -->
+      <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+        <input type="text" id="shopUrlInput" class="search-input" style="flex: 1; min-width: 280px;" placeholder="Nhập Link Shop Shopee (VD: https://shopee.vn/tu_store)..." />
+        <button class="btn" onclick="addNewVoucherShop()">
+          <span>➕</span> <span>Thêm Shop Quét Mã</span>
+        </button>
+      </div>
+
+      <!-- Grid Shop & Vouchers -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+        <!-- Card Shop đang theo dõi -->
+        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px;">
+          <h4 style="font-size: 15px; font-weight: 700; color: #38bdf8; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+            <span>🛍️ Shop Đang Theo Dõi</span>
+            <span id="shopCountBadge" style="background: rgba(6, 182, 212, 0.2); color: #38bdf8; padding: 2px 8px; border-radius: 10px; font-size: 12px;">0 shop</span>
+          </h4>
+          <div id="shopTargetList" style="display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto;">
+            <p style="font-size: 13px; color: var(--text-muted);">Đang tải danh sách shop...</p>
+          </div>
+        </div>
+
+        <!-- Card Danh Sách Voucher Mới Phát Hiện -->
+        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px;">
+          <h4 style="font-size: 15px; font-weight: 700; color: #10b981; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+            <span>✨ Voucher Mới Nhất</span>
+            <span id="voucherCountBadge" style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 2px 8px; border-radius: 10px; font-size: 12px;">0 mã</span>
+          </h4>
+          <div id="voucherList" style="display: flex; flex-direction: column; gap: 12px; max-height: 320px; overflow-y: auto;">
+            <p style="font-size: 13px; color: var(--text-muted);">Đang tải danh sách voucher...</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+
 
   <!-- Modal Hiển Thị Mã QR Code Vector SVG & Link Công Khai -->
   <div class="modal-overlay" id="qrModal">
@@ -1145,6 +1230,144 @@
       timelineWrapper.style.display = 'none';
       isTimelineOpen = false;
       document.getElementById('toggleTimelineText').innerText = t.viewTimeline;
+
+      // Helper Show Toast Popup Notifications
+      function showToast(msg, icon = '✨') {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = 'toast-item';
+        toast.innerHTML = `<span>${icon}</span> <span>${msg}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateY(-10px)';
+          toast.style.transition = 'all 0.3s ease';
+          setTimeout(() => toast.remove(), 300);
+        }, 3000);
+      }
+
+      // --- SHOPEE VOUCHER DASHBOARD JS (PREMIUM ULTRA AESTHETICS) ---
+      async function loadVoucherDashboard() {
+        try {
+          const [shopsRes, vouchersRes] = await Promise.all([
+            fetch('/api/voucher-shops').then(r => r.json()),
+            fetch('/api/vouchers/hot').then(r => r.json())
+          ]);
+
+          if (shopsRes.success) {
+            const shops = shopsRes.shops || [];
+            document.getElementById('shopCountBadge').innerText = `${shops.length} shop`;
+            if (shops.length === 0) {
+              document.getElementById('shopTargetList').innerHTML = `<p style="font-size: 13px; color: var(--text-muted);">Chưa có shop nào được theo dõi. Nhập link shop bên trên để thêm!</p>`;
+            } else {
+              let html = '';
+              shops.forEach(s => {
+                html += `<div style="background: rgba(30, 41, 59, 0.85); border: 1px solid rgba(6, 182, 212, 0.25); padding: 12px 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='rgba(6, 182, 212, 0.25)'">
+                  <div>
+                    <div style="font-size: 14px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 6px;"><span>🏪</span> <span>${s.shopName || 'Shop'}</span></div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${s.shopUrl}</div>
+                  </div>
+                  <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px; color: var(--danger); border-color: rgba(239, 68, 68, 0.3);" onclick="deleteVoucherShop('${s.id}')">✕ Xóa</button>
+                </div>`;
+              });
+              document.getElementById('shopTargetList').innerHTML = html;
+            }
+          }
+
+          if (vouchersRes.success) {
+            const vouchers = vouchersRes.vouchers || [];
+            document.getElementById('voucherCountBadge').innerText = `${vouchers.length} mã`;
+            if (vouchers.length === 0) {
+              document.getElementById('voucherList').innerHTML = `<p style="font-size: 13px; color: var(--text-muted);">Chưa tìm thấy mã giảm giá nào.</p>`;
+            } else {
+              let html = '';
+              vouchers.forEach(v => {
+                const codeStr = v.voucherCode ? v.voucherCode : 'MÃ TỰ ĐỘNG';
+                const targetUrl = v.affiliateUrl || v.sourceUrl;
+                const hotBadge = v.score > 0 ? `<span style="background: linear-gradient(135deg, #ef4444, #f59e0b); color: #fff; padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: 800; animation: hotGlow 2s infinite;">🔥 HOT: ${v.score}đ</span>` : '';
+
+                html += `<div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8)); border: 1px solid rgba(16, 185, 129, 0.3); border-left: 4px solid #10b981; padding: 14px 16px; border-radius: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.25); transition: all 0.25s ease;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <div style="font-size: 15px; font-weight: 800; color: #10b981; display: flex; align-items: center; gap: 6px;">
+                      <span>🎟️</span> <span>${v.discountValue}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      ${hotBadge}
+                      <code style="background: rgba(6, 182, 212, 0.18); border: 1px solid rgba(6, 182, 212, 0.4); color: #38bdf8; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 12px;">${codeStr}</code>
+                    </div>
+                  </div>
+                  <div style="font-size: 13px; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">${v.title}</div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-muted); border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; margin-top: 8px;">
+                    <div>Shop: <b>${v.shopName}</b> | Đơn tối thiểu: <b>${v.minSpend}</b></div>
+                    <div style="display: flex; gap: 6px;">
+                      ${v.voucherCode ? `<button class="btn btn-secondary" style="padding: 3px 8px; font-size: 11px;" onclick="copyCode('${v.voucherCode}')">📋 Sao Chép</button>` : ''}
+                      <a href="${targetUrl}" target="_blank" class="btn" style="padding: 3px 10px; font-size: 11px; text-decoration: none;">🚀 Mở Shopee</a>
+                    </div>
+                  </div>
+                </div>`;
+              });
+              document.getElementById('voucherList').innerHTML = html;
+            }
+          }
+        } catch (err) {
+          console.error('Lỗi khi tải voucher dashboard', err);
+        }
+      }
+
+      function copyCode(code) {
+        navigator.clipboard.writeText(code);
+        showToast(`Đã sao chép mã voucher: ${code}`, '📋');
+      }
+
+      async function addNewVoucherShop() {
+        const input = document.getElementById('shopUrlInput');
+        const url = input.value.trim();
+        if (!url) return showToast('Vui lòng nhập link shop Shopee!', '⚠️');
+
+        showToast('Đang cào voucher từ shop Shopee...', '⏳');
+
+        try {
+          const res = await fetch('/api/voucher-shops', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ shopUrl: url })
+          }).then(r => r.json());
+
+          if (res.success) {
+            input.value = '';
+            showToast(`Thành công! Đã thêm shop ${res.shop.shopName} & tìm thấy ${res.newVouchersFound} voucher!`, '🎉');
+            loadVoucherDashboard();
+          } else {
+            showToast('Lỗi: ' + res.errorMessage, '❌');
+          }
+        } catch (err) {
+          showToast('Lỗi kết nối server.', '❌');
+        }
+      }
+
+      async function deleteVoucherShop(shopId) {
+        if (!confirm('Bạn có chắc muốn xóa shop này khỏi danh sách theo dõi?')) return;
+        try {
+          const res = await fetch('/api/voucher-shops', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ shopId })
+          }).then(r => r.json());
+
+          if (res.success) {
+            showToast('Đã xóa shop khỏi danh sách quét.', '🗑️');
+            loadVoucherDashboard();
+          }
+        } catch (err) {
+          showToast('Lỗi kết nối server.', '❌');
+        }
+      }
+
+      // Tự động tải Voucher Dashboard khi load trang
+      window.addEventListener('DOMContentLoaded', () => {
+        loadVoucherDashboard();
+      });
 
       document.getElementById('timelineList').innerHTML = `<p style="color: var(--text-muted);">${t.checkingCarrier}</p>`;
 

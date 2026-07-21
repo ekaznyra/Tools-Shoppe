@@ -34,3 +34,53 @@ model SyncLog {
   errorCount   Int      @default(0)
   errorMessage String?
 }
+
+model Voucher {
+  id                  String    @id @default(uuid())
+  sourceUrl           String
+  shopId              String?
+  shopName            String?
+  voucherCode         String?
+  title               String
+  discountValue       String
+  discountAmountValue Float     @default(0.0)
+  minSpend            String    @default("0")
+  minSpendValue       Float     @default(0.0)
+  usageQuantity       Int       @default(100)
+  category            String    @default("GENERAL")
+  score               Float     @default(0.0)
+  affiliateUrl        String?
+  startTime           DateTime?
+  endTime             DateTime?
+  contentHash         String    @unique
+  firstSeenAt         DateTime  @default(now())
+  notifiedAt          DateTime?
+
+  @@index([voucherCode])
+  @@index([shopId])
+  @@index([contentHash])
+  @@index([score])
+}
+
+model VoucherShopTarget {
+  id            String   @id @default(uuid())
+  shopUrl       String   @unique
+  shopId        String?
+  shopName      String?
+  category      String   @default("General")
+  isEnabled     Boolean  @default(true)
+  addedByChatId String   @default("")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model VoucherUserPreference {
+  id               String   @id @default(uuid())
+  chatId           String   @unique
+  minDiscountValue Float    @default(0.0)
+  maxMinSpend      Float    @default(10000000.0)
+  categoryFilter   String   @default("ALL")
+  isPaused         Boolean  @default(false)
+  updatedAt        DateTime @updatedAt
+}
+
