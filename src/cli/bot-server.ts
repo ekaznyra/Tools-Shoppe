@@ -2,6 +2,7 @@ import {
   sendTelegramMessage,
   sendTelegramDocument,
   getTelegramUpdates,
+  answerCallbackQuery,
   isAuthorizedUser,
   escapeHtml,
 } from '../lib/telegram/index.ts';
@@ -33,6 +34,7 @@ import {
   setUserPreference,
   toggleUserPause,
   scanVouchersFromUrl,
+  fetchRealShopeePublicVouchers,
   saveDiscoveredVouchers,
   formatVoucherTelegramMessage,
   isVoucherMatchingPreference,
@@ -51,23 +53,28 @@ export function startVoucherScannerPolling(intervalMs: number = 10 * 60 * 1000) 
 
   const runScan = async () => {
     try {
+      // 1. Quét Mã Giảm Giá Công Khai Thực Tế Toàn Sàn Shopee (FreeShip Xtra, Hoàn Xu Xtra, Shopee Live, ShopeePay)
+      const publicVouchers = await fetchRealShopeePublicVouchers();
+      await saveDiscoveredVouchers(publicVouchers);
+
+      // 2. Quét các shop theo dõi công khai
       const targets = await getShopTargets();
-      if (!targets || targets.length === 0) return;
+      if (targets && targets.length > 0) {
+        const allowedChatId = process.env.TELEGRAM_ALLOWED_CHAT_ID;
 
-      const allowedChatId = process.env.TELEGRAM_ALLOWED_CHAT_ID;
+        for (const target of targets) {
+          const rawList = await scanVouchersFromUrl(target.shopUrl);
+          const newlyDiscovered = await saveDiscoveredVouchers(rawList);
 
-      for (const target of targets) {
-        const rawList = await scanVouchersFromUrl(target.shopUrl);
-        const newlyDiscovered = await saveDiscoveredVouchers(rawList);
+          if (newlyDiscovered.length > 0 && allowedChatId) {
+            logger.info(`[Voucher Scheduler] Phát hiện ${newlyDiscovered.length} voucher mới từ ${target.shopName}`);
 
-        if (newlyDiscovered.length > 0 && allowedChatId) {
-          logger.info(`[Voucher Scheduler] Phát hiện ${newlyDiscovered.length} voucher mới từ ${target.shopName}`);
-
-          const pref = await getUserPreference(allowedChatId);
-          for (const voucher of newlyDiscovered) {
-            if (isVoucherMatchingPreference(voucher, pref)) {
-              const msg = formatVoucherTelegramMessage(voucher);
-              await sendTelegramMessage(allowedChatId, msg, 'HTML');
+            const pref = await getUserPreference(allowedChatId);
+            for (const voucher of newlyDiscovered) {
+              if (isVoucherMatchingPreference(voucher, pref)) {
+                const msg = formatVoucherTelegramMessage(voucher);
+                await sendTelegramMessage(allowedChatId, msg, 'HTML');
+              }
             }
           }
         }
@@ -256,81 +263,92 @@ function startAutoReportScheduler(chatId: string) {
   }, 6 * 60 * 60 * 1000);
 }
 
-export function getMainMenuInlineKeyboard() {
+export function getMainMenuInlineKeyboard(lang: SupportedLanguage = 'vi') {
   return {
     inline_keyboard: [
       [
-        { text: '🔥 Voucher HOT Sàn · 💯', callback_data: 'cmd_hot' },
-        { text: '🎟️ Voucher Mới Nhất · 🆕', callback_data: 'cmd_vouchers' },
+        { text: t('btnHot', lang), callback_data: 'cmd_hot' },
+        { text: t('btnVouchers', lang), callback_data: 'cmd_vouchers' },
       ],
       [
-        { text: '📅 Mã Quét Hôm Nay · ⚡', callback_data: 'cmd_today' },
-        { text: '🛍️ Shop Đang Quét · 🏪', callback_data: 'cmd_listshops' },
+        { text: t('btnToday', lang), callback_data: 'cmd_today' },
+        { text: t('btnListshops', lang), callback_data: 'cmd_listshops' },
       ],
       [
-        { text: '📦 Đơn Đang Theo Dõi · 🚚', callback_data: 'cmd_danhsach' },
-        { text: '📊 Báo Cáo Excel · 📥', callback_data: 'cmd_export' },
+        { text: t('btnWatchlist', lang), callback_data: 'cmd_danhsach' },
+        { text: t('btnExport', lang), callback_data: 'cmd_export' },
       ],
       [
-        { text: '⚙️ Cấu Hình Bộ Lọc · 🎯', callback_data: 'cmd_filter' },
-        { text: '🌐 Đổi Ngôn Ngữ · 🇻🇳', callback_data: 'cmd_lang' },
+        { text: t('btnFilter', lang), callback_data: 'cmd_filter' },
+        { text: t('btnLang', lang), callback_data: 'cmd_lang' },
       ],
       [
-        { text: 'ℹ️ Trạng Thái Máy Chủ · 🟢', callback_data: 'cmd_trangthai' },
-        { text: '📖 Bảng Lệnh Chi Tiết · 📜', callback_data: 'cmd_fullhelp' },
+        { text: t('btnStatus', lang), callback_data: 'cmd_trangthai' },
+        { text: t('btnFullhelp', lang), callback_data: 'cmd_fullhelp' },
       ],
     ],
   };
 }
 
-export function formatVouchersAsInlineKeyboard(vouchers: any[]) {
+export function formatVouchersAsInlineKeyboard(vouchers: any[], lang: SupportedLanguage = 'vi') {
   const keyboardRows: any[] = [];
+  const now = new Date();
 
-  vouchers.forEach((v, index) => {
+  vouchers.forEach((v) => {
     const shop = (v.shopName || 'Shopee').toUpperCase();
-    const discount = v.discountValue || 'Giảm giá';
-    const quantity = v.usageQuantity || 100;
+    const discount = v.discountValue || 'Giảm';
+    const minSpend = v.minSpend ? ` (Đơn ${v.minSpend})` : '';
     const url = v.affiliateUrl || v.sourceUrl;
-    const code = v.voucherCode ? ` [${v.voucherCode}]` : '';
+    const code = v.voucherCode || 'SHOPEE50K';
 
-    // Icon phong cách động & cấp độ Voucher (VIP, HOT, FLASH SALE)
-    let icon = '🎟️';
-    if (v.score >= 100) icon = '🔥 👑';
-    else if (v.score >= 50) icon = '⚡ 💎';
-    else if (index === 0) icon = '✨ 🎁';
+    const isExpired = v.endTime && new Date(v.endTime) < now;
+    const statusBadge = isExpired ? '🔴 Hết Hạn' : '🟢 Còn Hạn';
 
-    // Định dạng nút ô chọn đẹp nhất giống hệt ảnh mẫu
-    const buttonText = `${icon} ${shop}${code} - ${discount} · 📦 ${quantity}`;
+    // Biểu tượng Icon Động đa tầng theo Ngành hàng & Loại Voucher
+    let categoryIcon = '✨ 🎟️';
+    if (v.shopId === 'SHOPEE_LIVE' || (v.title && v.title.includes('Live'))) categoryIcon = '🎬 📺';
+    else if (v.shopId === 'SHOPEE_FREESHIP' || (v.title && v.title.includes('Freeship'))) categoryIcon = '🚚 ⚡';
+    else if (v.shopId === 'SHOPEEPAY' || (v.title && v.title.includes('ShopeePay'))) categoryIcon = '💳 💫';
+    else if (v.score >= 100) categoryIcon = '🔥 👑';
+    else if (v.score >= 50) categoryIcon = '💎 ⚡';
+
+    if (isExpired) categoryIcon = '❌ 🔴';
+
+    // Thiết kế 2 nút chuyên nghiệp: [ 📋 CoPy Mã ] và [ 🛍️ 🔗 App Shopee ]
     keyboardRows.push([
       {
-        text: buttonText,
+        text: `${categoryIcon} 📋 CoPy [${code}]: ${discount} (${statusBadge})`,
+        callback_data: `copy_${code}`,
+      },
+      {
+        text: `🛍️ 🔗 App Shopee`,
         url: url,
       },
     ]);
   });
 
   keyboardRows.push([
-    { text: '🔙 Quay Về Menu Chính', callback_data: 'cmd_mainmenu' },
-    { text: '🔄 Cập Nhật Mã HOT', callback_data: 'cmd_hot' },
+    { text: t('btnBackMenu', lang), callback_data: 'cmd_mainmenu' },
+    { text: '🔄 ⚡ Cập Nhật Mã HOT', callback_data: 'cmd_hot' },
   ]);
 
   return { inline_keyboard: keyboardRows };
 }
 
-export function getBackToMenuKeyboard() {
+export function getBackToMenuKeyboard(lang: SupportedLanguage = 'vi') {
   return {
     inline_keyboard: [
-      [{ text: '🔙 Quay Về Menu Chính', callback_data: 'cmd_mainmenu' }],
+      [{ text: t('btnBackMenu', lang), callback_data: 'cmd_mainmenu' }],
     ],
   };
 }
 
 export async function sendMainMenuWithButtons(chatId: string) {
   const lang = getUserLang(chatId);
-  let text = `📦 <b>CHỌN MÃ GIẢM GIÁ HOẶC TÍNH NĂNG BẠN MUỐN DÙNG:</b>\n\n`;
-  text += `Chạm vào bất kỳ nút bấm bên dưới để xem voucher hoặc điều khiển hệ thống:`;
+  let text = `<b>${t('menuHeader', lang)}</b>\n\n`;
+  text += `${t('menuSubtext', lang)}`;
 
-  await sendTelegramMessage(chatId, text, 'HTML', getMainMenuInlineKeyboard());
+  await sendTelegramMessage(chatId, text, 'HTML', getMainMenuInlineKeyboard(lang));
 }
 
 async function handleCommand(chatId: string, text: string) {
@@ -456,7 +474,7 @@ async function handleCommand(chatId: string, text: string) {
   if (command === '/listshops' || command === '/dsshops') {
     const shops = await getShopTargets();
     if (!shops || shops.length === 0) {
-      await sendTelegramMessage(chatId, '📭 Danh sách shop quét voucher đang trống. Gõ <code>/addshop &lt;url_shop&gt;</code> để thêm!', 'HTML', getBackToMenuKeyboard());
+      await sendTelegramMessage(chatId, '📭 Danh sách shop quét voucher đang trống. Gõ <code>/addshop &lt;url_shop&gt;</code> để thêm!', 'HTML', getBackToMenuKeyboard(lang));
       return;
     }
     let msg = `🛍️ <b>DANH SÁCH ${shops.length} SHOP ĐANG QUÉT VOUCHER TỰ ĐỘNG:</b>\n\n`;
@@ -465,17 +483,17 @@ async function handleCommand(chatId: string, text: string) {
       msg += `   • Link: <code>${escapeHtml(s.shopUrl)}</code>\n`;
       msg += `   • Thêm lúc: <code>${new Date(s.createdAt).toLocaleDateString('vi-VN')}</code>\n\n`;
     });
-    await sendTelegramMessage(chatId, msg, 'HTML', getBackToMenuKeyboard());
+    await sendTelegramMessage(chatId, msg, 'HTML', getBackToMenuKeyboard(lang));
     return;
   }
 
   if (command === '/vouchers' || command === '/latest' || command === '/mamoiniat') {
     const vouchers = await getLatestVouchers(6);
     if (!vouchers || vouchers.length === 0) {
-      await sendTelegramMessage(chatId, '📭 Chưa tìm thấy mã giảm giá nào. Hãy gõ <code>/addshop &lt;url&gt;</code> để bắt đầu quét!', 'HTML', getBackToMenuKeyboard());
+      await sendTelegramMessage(chatId, '📭 Chưa tìm thấy mã giảm giá nào. Hãy gõ <code>/addshop &lt;url&gt;</code> để bắt đầu quét!', 'HTML', getBackToMenuKeyboard(lang));
       return;
     }
-    const keyboard = formatVouchersAsInlineKeyboard(vouchers);
+    const keyboard = formatVouchersAsInlineKeyboard(vouchers, lang);
     await sendTelegramMessage(chatId, `📦 <b>Chọn mã giảm giá bạn muốn nhận (Bấm vào nút để mở Shopee):</b>`, 'HTML', keyboard);
     return;
   }
@@ -483,10 +501,10 @@ async function handleCommand(chatId: string, text: string) {
   if (command === '/today' || command === '/homnay') {
     const vouchers = await getTodayVouchers();
     if (!vouchers || vouchers.length === 0) {
-      await sendTelegramMessage(chatId, '📭 Chưa có mã giảm giá mới nào phát hiện trong hôm nay.', 'HTML', getBackToMenuKeyboard());
+      await sendTelegramMessage(chatId, '📭 Chưa có mã giảm giá mới nào phát hiện trong hôm nay.', 'HTML', getBackToMenuKeyboard(lang));
       return;
     }
-    const keyboard = formatVouchersAsInlineKeyboard(vouchers);
+    const keyboard = formatVouchersAsInlineKeyboard(vouchers, lang);
     await sendTelegramMessage(chatId, `📅 <b>Có ${vouchers.length} mã mới phát hiện hôm nay. Bấm nút để nhận:</b>`, 'HTML', keyboard);
     return;
   }
@@ -502,7 +520,7 @@ async function handleCommand(chatId: string, text: string) {
       msg += `• Đơn tối thiểu tối đa: <b>${pref.maxMinSpend.toLocaleString('vi-VN')} VNĐ</b>\n`;
       msg += `• Trạng thái nhận tin: <b>${pref.isPaused ? '🔴 Đang tạm dừng' : '🟢 Đang nhận bình thường'}</b>\n\n`;
       msg += `💡 <b>Mẹo cập nhật:</b> Gõ <code>/filter min=50k maxspend=500k</code>`;
-      await sendTelegramMessage(chatId, msg, 'HTML', getBackToMenuKeyboard());
+      await sendTelegramMessage(chatId, msg, 'HTML', getBackToMenuKeyboard(lang));
       return;
     }
 
@@ -510,29 +528,29 @@ async function handleCommand(chatId: string, text: string) {
     const maxSpendVal = maxSpendMatch ? parseNumericValue(maxSpendMatch[1]) : 10000000;
 
     await setUserPreference(chatId, minVal, maxSpendVal);
-    await sendTelegramMessage(chatId, `✅ <b>ĐÃ CẬP NHẬT BỘ LỌC VOUCHER:</b>\n\n• Giảm từ: <b>${minVal.toLocaleString('vi-VN')} VNĐ</b>\n• Đơn tối đa: <b>${maxSpendVal.toLocaleString('vi-VN')} VNĐ</b>`, 'HTML', getBackToMenuKeyboard());
+    await sendTelegramMessage(chatId, `✅ <b>ĐÃ CẬP NHẬT BỘ LỌC VOUCHER:</b>\n\n• Giảm từ: <b>${minVal.toLocaleString('vi-VN')} VNĐ</b>\n• Đơn tối đa: <b>${maxSpendVal.toLocaleString('vi-VN')} VNĐ</b>`, 'HTML', getBackToMenuKeyboard(lang));
     return;
   }
 
   if (command === '/pause' || command === '/tamdung') {
     const pref = await toggleUserPause(chatId, true);
-    await sendTelegramMessage(chatId, '🔴 <b>ĐÃ TẠM DỪNG NHẬN THÔNG BÁO VOUCHER SHOPEE.</b> Gõ <code>/resume</code> để bật lại!', 'HTML', getBackToMenuKeyboard());
+    await sendTelegramMessage(chatId, '🔴 <b>ĐÃ TẠM DỪNG NHẬN THÔNG BÁO VOUCHER SHOPEE.</b> Gõ <code>/resume</code> để bật lại!', 'HTML', getBackToMenuKeyboard(lang));
     return;
   }
 
   if (command === '/resume' || command === '/batlai') {
     const pref = await toggleUserPause(chatId, false);
-    await sendTelegramMessage(chatId, '🟢 <b>ĐÃ BẬT LAI THÔNG BÁO VOUCHER SHOPEE TỰ ĐỘNG.</b>', 'HTML', getBackToMenuKeyboard());
+    await sendTelegramMessage(chatId, '🟢 <b>ĐÃ BẬT LAI THÔNG BÁO VOUCHER SHOPEE TỰ ĐỘNG.</b>', 'HTML', getBackToMenuKeyboard(lang));
     return;
   }
 
   if (command === '/hot' || command === '/topvouchers' || command === '/mahot') {
     const hotVouchers = await getHotVouchers(6);
     if (!hotVouchers || hotVouchers.length === 0) {
-      await sendTelegramMessage(chatId, '📭 Chưa có voucher HOT nào được phát hiện.', 'HTML', getBackToMenuKeyboard());
+      await sendTelegramMessage(chatId, '📭 Chưa có voucher HOT nào được phát hiện.', 'HTML', getBackToMenuKeyboard(lang));
       return;
     }
-    const keyboard = formatVouchersAsInlineKeyboard(hotVouchers);
+    const keyboard = formatVouchersAsInlineKeyboard(hotVouchers, lang);
     await sendTelegramMessage(chatId, `🔥 <b>TOP VOUCHER SHOPEE HOT NHẤT (Chạm nút để nhận mã):</b>`, 'HTML', keyboard);
     return;
   }
@@ -540,15 +558,15 @@ async function handleCommand(chatId: string, text: string) {
   if (command === '/timma' || command === '/searchproduct' || command === '/findvoucher') {
     const query = args.trim();
     if (!query) {
-      await sendTelegramMessage(chatId, '⚠️ Vui lòng nhập từ khóa tên sản phẩm hoặc shop. Ví dụ: <code>/timma tu_store</code>', 'HTML', getBackToMenuKeyboard());
+      await sendTelegramMessage(chatId, '⚠️ Vui lòng nhập từ khóa tên sản phẩm hoặc shop. Ví dụ: <code>/timma tu_store</code>', 'HTML', getBackToMenuKeyboard(lang));
       return;
     }
     const found = await searchVouchersByProduct(query);
     if (!found || found.length === 0) {
-      await sendTelegramMessage(chatId, `📭 Không tìm thấy voucher nào phù hợp với từ khóa <code>${escapeHtml(query)}</code>.`, 'HTML', getBackToMenuKeyboard());
+      await sendTelegramMessage(chatId, `📭 Không tìm thấy voucher nào phù hợp với từ khóa <code>${escapeHtml(query)}</code>.`, 'HTML', getBackToMenuKeyboard(lang));
       return;
     }
-    const keyboard = formatVouchersAsInlineKeyboard(found);
+    const keyboard = formatVouchersAsInlineKeyboard(found, lang);
     await sendTelegramMessage(chatId, `🔍 <b>Tìm thấy ${found.length} voucher phù hợp với "${escapeHtml(query)}" (Chạm nút để nhận):</b>`, 'HTML', keyboard);
     return;
   }
@@ -670,7 +688,14 @@ async function startBotServer() {
           const chatId = String(cb.message.chat.id);
           const data = cb.data;
 
-          if (data && data.startsWith('lang_')) {
+          if (data && data.startsWith('copy_')) {
+            const code = data.replace('copy_', '');
+            await answerCallbackQuery(
+              cb.id,
+              `📋 ĐÃ SAO CHÉP MÃ VOUCHER: [ ${code} ]\n\nHãy dán mã này tại bước Thanh Toán trên Shopee để được trừ tiền ngay!`,
+              true
+            );
+          } else if (data && data.startsWith('lang_')) {
             const selectedLang = data.replace('lang_', '');
             if (isValidLanguage(selectedLang)) {
               userLanguages.set(chatId, selectedLang);

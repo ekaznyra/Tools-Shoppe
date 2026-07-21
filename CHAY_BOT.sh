@@ -1,13 +1,12 @@
 #!/bin/bash
 # ====================================================
-#   HE THONG TRA CUU MA VAN DON 24/7 (LINUX VPS)
-#   Optimized for 32 CPU Cores / 96GB RAM VPS
+#   TOOLS SHOPPE - VOUCHER SCANNER & WAYBILL TRACKER 24/7 (LINUX VPS)
 # ====================================================
 
 cd "$(dirname "$0")"
 
 while true; do
-  echo "[THONG BAO] Dang khoi chay Telegram Waybill Tracker Bot 24/7..."
+  echo "[THONG BAO] Dang khoi chay Voucher Scanner & Telegram Bot 24/7..."
   
   if [ ! -d "node_modules" ]; then
     echo "[THONG BAO] Dang cai dat thu vien ban dau..."
@@ -22,6 +21,7 @@ while true; do
   echo "===================================================="
   echo "[THONG BAO] BOT DANG HOAT DONG MANG 24/7 TREN VPS..."
   echo "- Trang web dashboard: http://localhost:3000"
+  echo "- Tinh nang: Tra cuu van don & Cao Voucher Shopee tu dong"
   echo "===================================================="
   echo ""
 

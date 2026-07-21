@@ -47,6 +47,36 @@ export async function sendTelegramMessage(
 }
 
 /**
+ * Trả lời Callback Query (Hiển thị popup thông báo tức thì khi bấm nút trên Telegram)
+ */
+export async function answerCallbackQuery(
+  callbackQueryId: string,
+  text: string,
+  showAlert: boolean = true
+): Promise<boolean> {
+  const token = process.env.TELEGRAM_BOT_TOKEN || BOT_TOKEN;
+  if (!token) return false;
+
+  const url = `https://api.telegram.org/bot${token}/answerCallbackQuery`;
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        callback_query_id: callbackQueryId,
+        text,
+        show_alert: showAlert,
+      }),
+    });
+    const data = await response.json();
+    return data.ok === true;
+  } catch (error: any) {
+    logger.error({ error: error.message }, 'Lỗi khi trả lời Callback Query');
+    return false;
+  }
+}
+
+/**
  * Gửi file tài liệu (Excel/CSV) qua Telegram
  */
 export async function sendTelegramDocument(

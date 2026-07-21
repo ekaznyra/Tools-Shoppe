@@ -1,9 +1,9 @@
 @echo off
 chcp 65001 >nul
-title BOT TRA CUU MA VAN DON 24/7
+title BOT TRA CUU VAN DON & CAO VOUCHER SHOPEE 24/7
 cls
 echo ====================================================
-echo   HE THONG TRA CUU MA VAN DON TU DONG 24/7
+echo   TOOLS SHOPPE - VOUCHER SCANNER & WAYBILL TRACKER 24/7
 echo ====================================================
 echo.
 cd /d %~dp0
@@ -23,8 +23,9 @@ if not exist shopee_orders.db (
 
 echo ====================================================
 echo [THONG BAO] BOT DANG HOAT DONG 24/7...
-echo - Trang web dashboard: http://localhost:3000
-echo - Che do: Tu dong khoi chay lai khi ngat mang
+echo - Trang Web Dashboard: http://localhost:3000
+echo - Tinh nang: Tra cuu van don & Cao Voucher Shopee tu dong
+echo - Che do: Tu dong khoi chay lai khi ngat ket noi
 echo - Nhan Ctrl + C de dung Bot
 echo ====================================================
 echo.
