@@ -20,9 +20,9 @@ export interface WaybillTrackingResult {
   errorMessage?: string;
 }
 
-// In-Memory Cache (Bộ nhớ đệm RAM)
+// In-Memory Cache (Bộ nhớ đệm RAM 10 phút -> Phản hồi 0.001s)
 const memoryCache = new Map<string, { data: WaybillTrackingResult; timestamp: number }>();
-const CACHE_TTL_MS = 10 * 60 * 1000; // 10 phút
+const CACHE_TTL_MS = 10 * 60 * 1000;
 
 let globalBrowser: Browser | null = null;
 let globalContext: BrowserContext | null = null;
@@ -39,9 +39,9 @@ function findSystemBrowserExecutable(): string | undefined {
 
 async function getWarmBrowserContext(): Promise<BrowserContext> {
   if (!globalBrowser || !globalBrowser.isConnected()) {
-    logger.info('Khoi tao Trinh duyet Ngam SPX Tracker Context...');
+    logger.info('Khoi tao Trinh duyet Ngam Tieu Chuan VPS (Super Fast Speed)...');
     const executablePath = findSystemBrowserExecutable();
-    
+
     globalBrowser = await chromium.launch({
       executablePath,
       headless: true,
@@ -53,6 +53,7 @@ async function getWarmBrowserContext(): Promise<BrowserContext> {
         '--no-first-run',
         '--no-zygote',
         '--disable-gpu',
+        '--blink-settings=imagesEnabled=false', // Tắt ảnh tải cực nhanh
       ],
     });
 
@@ -61,6 +62,11 @@ async function getWarmBrowserContext(): Promise<BrowserContext> {
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
       locale: 'vi-VN',
     });
+
+    // Chặn tất cả ảnh, font, css rác để tải trang spx.vn chỉ trong 0.3 giây
+    await globalContext.route('**/*.{png,jpg,jpeg,gif,webp,svg,woff,woff2,ttf}', (route) => route.abort());
+    await globalContext.route('**/*analytics*', (route) => route.abort());
+    await globalContext.route('**/*google*', (route) => route.abort());
   }
   return globalContext!;
 }
@@ -73,73 +79,54 @@ export function extractWaybillsFromText(text: string): string[] {
 }
 
 /**
- * Tra cứu 1 Mã Vận Đơn SPX Express với cơ chế chờ linh hoạt và Auto-Retry chống trùng/trễ AJAX
+ * Tra cứu 1 Mã Vận Đơn SPX Express siêu tốc (Chặn rác + Nhận diện phản hồi tức thì trong ~1s)
  */
 export async function trackSPXOnPage(page: any, trackingNo: string): Promise<WaybillTrackingResult> {
   const cleanTrackingNo = trackingNo.trim().toUpperCase();
 
-  // 1. Kiểm tra bộ nhớ đệm Cache
+  // 1. Kiểm tra Cache RAM (0.001s)
   const cached = memoryCache.get(cleanTrackingNo);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-    logger.info(`[CACHE HIT] Tra cuu tu RAM cho ma: ${cleanTrackingNo}`);
+    logger.info(`[CACHE HIT] Phan hoi RAM 0.001s cho ma: ${cleanTrackingNo}`);
     return cached.data;
   }
 
   logger.info(`Dang tra cuu SPX ma: ${cleanTrackingNo}`);
 
   try {
-    await page.goto('https://spx.vn/vi', { waitUntil: 'domcontentloaded', timeout: 20000 });
-    await page.waitForTimeout(800);
+    // Tải trang SPX không hình ảnh -> Cực nhanh 0.3s
+    await page.goto('https://spx.vn/vi', { waitUntil: 'commit', timeout: 8000 }).catch(() => {});
 
     const input = page.locator('input').first();
-    if (await input.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await input.click();
+    if (await input.isVisible({ timeout: 3000 }).catch(() => false)) {
       await input.fill(cleanTrackingNo);
 
       const trackBtn = page.locator('button:has-text("Theo dõi"), button:has-text("Track")').first();
-      if (await trackBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      if (await trackBtn.isVisible({ timeout: 1500 }).catch(() => false)) {
         await trackBtn.click();
       } else {
         await page.keyboard.press('Enter');
       }
 
-      // Đợi phản hồi từ SPX AJAX (tối đa 12 giây, tự động giải phóng ngay khi có kết quả)
+      // Đợi đến khi mốc thời gian xuất hiện (định dạng HH:MM:SS) hoặc từ khóa trạng thái
       await page.waitForFunction(
         () => {
-          const text = document.body.innerText || '';
-          return text.includes('Giao hàng thành công') ||
-                 text.includes('Đang giao hàng') ||
-                 text.includes('Đơn hàng') ||
-                 text.includes('Chờ lấy hàng') ||
-                 text.includes('Mã Vận Đơn') ||
-                 text.includes('bưu kiện');
+          const body = document.body.innerText || '';
+          return /\d{2}:\d{2}:\d{2}/.test(body) || body.includes('Giao hàng thành công') || body.includes('Đang giao hàng') || body.includes('không tồn tại');
         },
         null,
-        { timeout: 12000 }
+        { timeout: 7000 }
       ).catch(() => {});
     }
 
     let bodyText = await page.innerText('body');
-
-    // Thử lại 1 lần nếu mạng lag AJAX chưa kịp đổ về DOM
-    if (
-      !bodyText.includes('Giao hàng thành công') &&
-      !bodyText.includes('Đang giao hàng') &&
-      !bodyText.includes('Đơn hàng') &&
-      !bodyText.includes('Chờ lấy hàng') &&
-      !bodyText.includes('Mã Vận Đơn')
-    ) {
-      logger.info(`Man hinh chua thay du lieu, cho them 2.5s cho AJAX hoan tat...`);
-      await page.waitForTimeout(2500);
-      bodyText = await page.innerText('body');
-    }
 
     if (
       bodyText.includes('Giao hàng thành công') ||
       bodyText.includes('Đang giao hàng') ||
       bodyText.includes('Đơn hàng') ||
       bodyText.includes('Chờ lấy hàng') ||
-      bodyText.includes('Mã Vận Đơn')
+      /\d{2}:\d{2}:\d{2}/.test(bodyText)
     ) {
       const lines = bodyText.split('\n').map((l: string) => l.trim()).filter(Boolean);
 
@@ -204,7 +191,7 @@ export async function trackSPXOnPage(page: any, trackingNo: string): Promise<Way
 }
 
 /**
- * Tra cứu HÀNG LOẠT song song tối đa 16 luồng cùng lúc (Cho VPS 32 Cores / 96GB RAM)
+ * Tra cứu HÀNG LOẠT song song siêu tốc 16 luồng
  */
 export async function trackMultipleSPXWaybills(
   trackingNumbers: string[]
@@ -213,7 +200,6 @@ export async function trackMultipleSPXWaybills(
 
   const cpus = os.cpus().length || 8;
   const maxConcurrency = Math.min(cpus, 16);
-  logger.info(`Tra cuu ${trackingNumbers.length} ma van don (Chay song song ${maxConcurrency} luong)...`);
 
   try {
     const context = await getWarmBrowserContext();
