@@ -1,76 +1,59 @@
-# Shopee Order Checker Tool (Node.js + TypeScript + Playwright + SQLite + Telegram Bot)
+# 🚚 BOT TRA CỨU MÃ VẬN ĐƠN ĐA KÊNH TỰ ĐỘNG (UNIVERSAL WAYBILL TRACKER)
 
-Công cụ tự động kiểm tra, đồng bộ và quản lý đơn hàng từ **Shopee Seller Centre** bảo mật cao dành cho chính chủ tài khoản shop.
+![License](https://img.shields.io/badge/License-Proprietary-red.svg)
+![Status](https://img.shields.io/badge/Status-Active%2024%2F7-brightgreen.svg)
+![VPS](https://img.shields.io/badge/VPS-32%20Cores%20%7C%2096GB%20RAM-blue.svg)
 
----
-
-## 🔒 Nguyên Tắc Bảo Mật & An Toàn 
-1. **Chỉ dùng cho tài khoản chính chủ / được ủy quyền**: Người dùng tự đăng nhập trực tiếp trên cửa sổ trình duyệt Playwright Chromium/Chrome.
-2. **Persistent Browser Context**: Lưu session đăng nhập cục bộ tại thư mục máy người dùng (`./shopee_user_data`).
-3. **Không thu thập / gửi dữ liệu ra ngoài**: Không bao giờ sao chép, gửi cookie, OTP, token hay mật khẩu lên bất kỳ máy chủ bên ngoài nào.
-4. **Bảo vệ PII**: Tự động lọc/mask họ tên, số điện thoại, địa chỉ khách hàng trên giao diện và log.
-5. **Telegram Whitelist**: Chỉ tài khoản Telegram có `CHAT_ID` trong danh sách cho phép mới có quyền ra lệnh cho Bot.
+Hệ thống tra cứu, dự báo thời gian giao hàng và tự động theo dõi bưu cục 24/7 hàng đầu cho các nhà vận chuyển **SPX Express, GHTK, GHN, Viettel Post, Ninja Van**.
 
 ---
 
-## 📂 Cấu Trúc Thư Mục Dự Án
+## 🔒 BẢO HỘ BẢN QUYỀN TRÊN GITHUB (PROPRIETARY COPYRIGHT)
 
-```
-shopee-order-checker/
-├── .env                         # Configuration môi trường cục bộ (Chứa Telegram Token & DB URL)
-├── .env.example                 # File mẫu cấu hình môi trường
-├── package.json                 # Khai báo dependency & npm scripts
-├── tsconfig.json                # Cấu hình TypeScript Strict Mode
-├── prisma/
-│   └── schema.prisma            # Schema SQLite lưu trữ đơn hàng & nhật ký đồng bộ
-├── src/
-│   ├── types/
-│   │   └── index.ts             # Định nghĩa Interface TypeScript
-│   ├── lib/
-│   │   ├── logging/             # Module ghi log an toàn, tự động mask PII
-│   │   ├── browser/             # Khởi tạo Playwright Persistent Browser Context
-│   │   ├── authentication/      # Kiểm tra trạng thái đăng nhập Shopee Seller Centre
-│   │   ├── order-parser/        # Bóc tách dữ liệu đơn hàng với selector an toàn
-│   │   ├── database/            # Client Prisma SQLite, upsert đơn & lịch sử đồng bộ
-│   │   ├── export/              # Xuất dữ liệu báo cáo ra file Excel (.xlsx) & CSV
-│   │   └── telegram/            # Client Telegram Bot API (Send message, send file, polling)
-│   └── cli/
-│       ├── sync-orders.ts       # Script chính khởi chạy tiến trình đồng bộ CLI
-│       ├── test-demo.ts         # Script test thử nghiệm bóc tách & export dữ liệu
-│       └── bot-server.ts        # Telegram Bot Server chạy nền tương tác trực tiếp
-└── README.md                    # Hướng dẫn chi tiết cài đặt và vận hành
-```
+> **⚠️ BẢO HỘ BẢN QUYỀN SỞ HỮU TRÍ TUỆ:**  
+> Bản quyền thuộc về **Kaze © 2026**.  
+> Nghiêm cấm mọi hành vi sao chép, chỉnh sửa, đổi tên thương hiệu (Re-branding), bán lại hoặc phát hành lại mã nguồn này trên GitHub hoặc bất kỳ nền tảng nào khác mà không có sự cho phép bằng văn bản của tác giả.
 
 ---
 
-## 🤖 Hướng Dẫn Cấu Hình & Chạy Telegram Bot
+## 🌟 CÁC TÍNH NĂNG NỔI BẬT
 
-### Step 1: Tạo Telegram Bot
-1. Mở Telegram, tìm kiếm **@BotFather**.
-2. Gõ `/newbot` và đặt tên cho Bot của bạn.
-3. Sao chép chuỗi **API Token** được BotFather cấp (VD: `7123456789:AAFxxx...`).
+1. **Tra cứu đa kênh siêu tốc**: Hỗ trợ SPX Express, GHTK, GHN, Viettel Post, Ninja Van.
+2. **VPS High-Performance Ready**: Tận dụng 32 CPU Cores & 96GB RAM, xử lý song song 16 luồng cùng lúc.
+3. **Bộ nhớ đệm RAM 10 phút**: Trả kết quả tức thì trong **0.001s**.
+4. **Tự động theo dõi 24/7 (`/theodoi`)**: Phát báo động về Telegram ngay khi bưu kiện đổi kho.
+5. **Dự báo giao hàng (ETA Predictor)**: Dự đoán ngày/giờ bưu kiện tới tay người nhận.
+6. **Mẫu tin nhắn nhắc nghe máy (`/nhackhach`)**: Tạo nhanh mẫu tin nhắn gửi Zalo/SMS cho người nhận.
+7. **Trang Quản Trị Web (`http://localhost:3000`)**: Giao diện Web Dark Mode chuyên nghiệp.
 
-### Step 2: Cấu hình File `.env`
-Mở file `.env` và điền thông tin Token của bạn:
+---
 
-```env
-TELEGRAM_BOT_TOKEN="7123456789:AAFxxx..."
-TELEGRAM_ALLOWED_CHAT_ID=""
-```
+## 🚀 HƯỚNG DẪN KHỞI CHẠY
 
-### Step 3: Khởi chạy Telegram Bot Server
+### 1. Trên Windows:
+- Nhấp đúp chuột file **`CAI_DAT_THU_VIEN.cmd`** (để cài đặt tự động ban đầu).
+- Nhấp đúp chuột file **`CHAY_BOT.cmd`** (để bật Bot 24/7 tự khôi phục).
 
+### 2. Trên Linux VPS (Ubuntu/Debian/CentOS):
 ```bash
-npm run bot
+chmod +x CHAY_BOT.sh
+./CHAY_BOT.sh
 ```
 
 ---
 
-## 💬 Các Lệnh Tương Tác Qua Telegram Bot
+## 📜 LỆNH TELEGRAM BOT (100% TIẾNG VIỆT)
 
-- `/start` hoặc `/help` : Xem danh sách menu và hướng dẫn.
-- `/orders` : Xem danh sách 10 đơn hàng mới nhất lưu trong CSDL.
-- `/search <từ_khóa>` : Tìm kiếm đơn theo Mã đơn hàng, SKU hoặc Tên sản phẩm.
-- `/sync` : Kích hoạt Playwright mở Chrome đồng bộ đơn hàng trực tiếp từ Shopee.
-- `/export` : Tạo file báo cáo Excel & CSV rồi gửi đính kèm thẳng vào Telegram Chat.
-- `/status` : Kiểm tra trạng thái làm việc của hệ thống và CSDL.
+- `/tracuu <mã>` hoặc `/tim <mã>` : Tra cứu hành trình vận đơn
+- `/theodoi <mã>` : Thêm mã vào danh sách Tự Động Theo Dõi 24/7
+- `/danhsach` : Xem các mã đang tự động theo dõi
+- `/huytheodoi <mã>` : Hủy theo dõi mã vận đơn
+- `/nhackhach <mã>` : Tạo tin nhắn mẫu nhắc nghe máy
+- `/xuatexcel` : Xuất file Excel báo cáo
+- `/baocaotudong` : Bật/Tắt gửi file Excel tự động 6h/lần
+- `/trangthai` : Kiểm tra trạng thái hệ thống
+- `/huongdan` : Xem menu hướng dẫn
+
+---
+
+**Copyright © 2026 Kaze. All rights reserved.**

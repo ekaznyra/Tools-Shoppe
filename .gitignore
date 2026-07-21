@@ -1,0 +1,25 @@
+# File cấu hình biến môi trường chứa Token Telegram
+.env
+.env.local
+
+# Thư viện dependencies
+node_modules/
+dist/
+
+# Cơ sở dữ liệu & File dữ liệu cá nhân
+*.db
+*.db-journal
+shopee_orders.db
+shopee_orders_backup.json
+waybill_watchlist.json
+shopee_user_data/
+
+# Thư mục file xuất báo cáo & log
+exports/
+*.log
+
+# File rác hệ điều hành & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
