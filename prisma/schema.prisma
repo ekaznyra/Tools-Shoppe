@@ -1,0 +1,36 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Order {
+  id              String   @id @default(uuid())
+  orderSn         String   @unique
+  orderStatus     String
+  createdAtShopee DateTime?
+  productName     String
+  sku             String   @default("")
+  quantity        Int      @default(1)
+  totalAmount     Float    @default(0.0)
+  shippingCarrier String   @default("")
+  shippingStatus  String   @default("")
+  syncedAt        DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([orderSn])
+  @@index([sku])
+  @@index([orderStatus])
+}
+
+model SyncLog {
+  id           String   @id @default(uuid())
+  timestamp    DateTime @default(now())
+  status       String   // "SUCCESS" | "FAILED" | "IN_PROGRESS"
+  syncedCount  Int      @default(0)
+  errorCount   Int      @default(0)
+  errorMessage String?
+}

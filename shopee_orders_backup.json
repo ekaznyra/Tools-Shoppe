@@ -1,0 +1,24 @@
+[
+  {
+    "orderSn": "ORD-1784656666346-0",
+    "orderStatus": "Hoàn thành",
+    "createdAtShopee": "2026-07-21T17:57:46.362Z",
+    "productName": "Áo Thun Nam Cotton Cao Cấp Co Giãn 4 Chiều (Khách hàng: Nguyễn Văn A, SĐT: 091****678)",
+    "sku": "",
+    "quantity": 1,
+    "totalAmount": 299000,
+    "shippingCarrier": "SPX Express",
+    "shippingStatus": "Đã giao thành công"
+  },
+  {
+    "orderSn": "ORD-1784656666363-1",
+    "orderStatus": "Đang giao",
+    "createdAtShopee": "2026-07-21T17:57:46.374Z",
+    "productName": "Giày Sneaker Thể Thao Nam Phong Cách Hàn Quốc (Khách hàng: Trần Thị B, SĐT: 098****321)",
+    "sku": "",
+    "quantity": 1,
+    "totalAmount": 450000,
+    "shippingCarrier": "Giao Hàng Nhanh (GHN)",
+    "shippingStatus": "Đang vận chuyển"
+  }
+]

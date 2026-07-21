@@ -1,0 +1,36 @@
+{
+  "name": "shopee-order-checker",
+  "version": "1.0.0",
+  "description": "Tool kiểm tra và đồng bộ đơn hàng Shopee Seller Centre an toàn bằng Playwright persistent context & SQLite",
+  "type": "module",
+  "main": "dist/cli/sync-orders.js",
+  "scripts": {
+    "build": "tsc",
+    "sync": "ts-node src/cli/sync-orders.ts",
+    "bot": "ts-node src/cli/bot-server.ts",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "db:generate": "prisma generate"
+  },
+  "keywords": ["shopee", "playwright", "seller-centre", "prisma", "sqlite", "telegram-bot"],
+  "author": "Kaze",
+  "license": "MIT",
+  "dependencies": {
+    "@prisma/client": "^5.19.0",
+    "dotenv": "^16.4.5",
+    "exceljs": "^4.4.0",
+    "pino": "^9.3.2",
+    "pino-pretty": "^11.2.2",
+    "playwright": "^1.46.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "prisma": "^5.19.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
