@@ -20,7 +20,7 @@ export interface WaybillTrackingResult {
   errorMessage?: string;
 }
 
-// In-Memory Cache (Bộ nhớ đệm RAM 10 phút -> Phản hồi 0.001s)
+// In-Memory Cache (Bộ nhớ đệm RAM 10 phút)
 const memoryCache = new Map<string, { data: WaybillTrackingResult; timestamp: number }>();
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
@@ -39,7 +39,7 @@ function findSystemBrowserExecutable(): string | undefined {
 
 async function getWarmBrowserContext(): Promise<BrowserContext> {
   if (!globalBrowser || !globalBrowser.isConnected()) {
-    logger.info('Khoi tao Trinh duyet Ngam Tieu Chuan VPS (Super Fast Speed)...');
+    logger.info('Khoi tao Trinh duyet Ngam SPX Tracker Context (Can bang Nhanh & An toan)...');
     const executablePath = findSystemBrowserExecutable();
 
     globalBrowser = await chromium.launch({
@@ -53,7 +53,7 @@ async function getWarmBrowserContext(): Promise<BrowserContext> {
         '--no-first-run',
         '--no-zygote',
         '--disable-gpu',
-        '--blink-settings=imagesEnabled=false', // Tắt ảnh tải cực nhanh
+        '--blink-settings=imagesEnabled=false',
       ],
     });
 
@@ -63,8 +63,8 @@ async function getWarmBrowserContext(): Promise<BrowserContext> {
       locale: 'vi-VN',
     });
 
-    // Chặn tất cả ảnh, font, css rác để tải trang spx.vn chỉ trong 0.3 giây
-    await globalContext.route('**/*.{png,jpg,jpeg,gif,webp,svg,woff,woff2,ttf}', (route) => route.abort());
+    // Chặn ảnh/fonts rác để tải trang siêu tốc
+    await globalContext.route('**/*.{png,jpg,jpeg,webp,svg,woff,woff2,ttf}', (route) => route.abort());
     await globalContext.route('**/*analytics*', (route) => route.abort());
     await globalContext.route('**/*google*', (route) => route.abort());
   }
@@ -79,12 +79,12 @@ export function extractWaybillsFromText(text: string): string[] {
 }
 
 /**
- * Tra cứu 1 Mã Vận Đơn SPX Express siêu tốc (Chặn rác + Nhận diện phản hồi tức thì trong ~1s)
+ * Tra cứu 1 Mã Vận Đơn SPX Express (Cân bằng Hoàn hảo: Siêu Nhanh + An Toàn + Chuẩn Thời Gian Realtime)
  */
 export async function trackSPXOnPage(page: any, trackingNo: string): Promise<WaybillTrackingResult> {
   const cleanTrackingNo = trackingNo.trim().toUpperCase();
 
-  // 1. Kiểm tra Cache RAM (0.001s)
+  // 1. Phản hồi tức thì từ RAM nếu có Cache (0.001s)
   const cached = memoryCache.get(cleanTrackingNo);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
     logger.info(`[CACHE HIT] Phan hoi RAM 0.001s cho ma: ${cleanTrackingNo}`);
@@ -94,32 +94,50 @@ export async function trackSPXOnPage(page: any, trackingNo: string): Promise<Way
   logger.info(`Dang tra cuu SPX ma: ${cleanTrackingNo}`);
 
   try {
-    // Tải trang SPX không hình ảnh -> Cực nhanh 0.3s
-    await page.goto('https://spx.vn/vi', { waitUntil: 'commit', timeout: 8000 }).catch(() => {});
+    await page.goto('https://spx.vn/vi', { waitUntil: 'commit', timeout: 10000 }).catch(() => {});
 
     const input = page.locator('input').first();
-    if (await input.isVisible({ timeout: 3000 }).catch(() => false)) {
+    if (await input.isVisible({ timeout: 4000 }).catch(() => false)) {
       await input.fill(cleanTrackingNo);
 
       const trackBtn = page.locator('button:has-text("Theo dõi"), button:has-text("Track")').first();
-      if (await trackBtn.isVisible({ timeout: 1500 }).catch(() => false)) {
+      if (await trackBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
         await trackBtn.click();
       } else {
         await page.keyboard.press('Enter');
       }
 
-      // Đợi đến khi mốc thời gian xuất hiện (định dạng HH:MM:SS) hoặc từ khóa trạng thái
+      // Đợi thông minh: Giải phóng TỨC THÌ khi mốc lịch sử thời gian (HH:MM:SS) xuất hiện,
+      // nhưng cho phép chờ an toàn tối đa 6 giây nếu mạng bưu cục lag
       await page.waitForFunction(
         () => {
           const body = document.body.innerText || '';
-          return /\d{2}:\d{2}:\d{2}/.test(body) || body.includes('Giao hàng thành công') || body.includes('Đang giao hàng') || body.includes('không tồn tại');
+          // Phải có mốc thời gian HH:MM:SS hoặc thông báo không tồn tại chính thức
+          const hasTimestamp = /\d{2}:\d{2}:\d{2}/.test(body);
+          const hasOfficialStatus = body.includes('Giao hàng thành công') ||
+                                   body.includes('Đang giao hàng') ||
+                                   body.includes('Chờ lấy hàng') ||
+                                   body.includes('không tồn tại') ||
+                                   body.includes('Không tìm thấy');
+          return hasTimestamp || hasOfficialStatus;
         },
         null,
-        { timeout: 7000 }
+        { timeout: 6000 }
       ).catch(() => {});
     }
 
     let bodyText = await page.innerText('body');
+
+    // Nếu bưu cục phản hồi chậm, cho phép chờ an toàn 1.5s dự phòng
+    if (
+      !/\d{2}:\d{2}:\d{2}/.test(bodyText) &&
+      !bodyText.includes('Giao hàng thành công') &&
+      !bodyText.includes('Đang giao hàng') &&
+      !bodyText.includes('Chờ lấy hàng')
+    ) {
+      await page.waitForTimeout(1500);
+      bodyText = await page.innerText('body');
+    }
 
     if (
       bodyText.includes('Giao hàng thành công') ||
@@ -191,7 +209,7 @@ export async function trackSPXOnPage(page: any, trackingNo: string): Promise<Way
 }
 
 /**
- * Tra cứu HÀNG LOẠT song song siêu tốc 16 luồng
+ * Tra cứu HÀNG LOẠT song song 16 luồng cho VPS
  */
 export async function trackMultipleSPXWaybills(
   trackingNumbers: string[]
