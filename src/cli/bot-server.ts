@@ -104,17 +104,7 @@ async function handleWaybillSearch(chatId: string, waybillList: string[]): Promi
   // 1. Tra cứu 1 Mã Vận Đơn duy nhất
   if (waybillList.length === 1) {
     const waybillNo = waybillList[0];
-    const detected = detectCarrier(waybillNo);
-    const carrierLabel = detected !== 'UNKNOWN' ? detected : 'Shopee Logistics / Đa Kênh';
-
-    let checkingMsg = `🔍 <b>ĐANG KIỂM TRA HÀNH TRÌNH BƯU KIỆN</b>\n\n`;
-    checkingMsg += `📦 <b>Mã vận đơn:</b> <code>${escapeHtml(waybillNo)}</code>\n`;
-    checkingMsg += `🚚 <b>Kênh vận chuyển:</b> <b>${carrierLabel}</b>\n`;
-    checkingMsg += `⏳ <b>Trạng thái:</b> <i>Đang truy vấn dữ liệu bưu cục realtime...</i>`;
-
-    await sendTelegramMessage(chatId, checkingMsg, 'HTML');
-
-    const spxResult = await trackUniversalWaybillWithTimeout(waybillNo, 20000);
+    const spxResult = await trackUniversalWaybillWithTimeout(waybillNo, 10000);
 
     if (spxResult && spxResult.success) {
       if (!trackedHistory.some((h) => h.trackingNo === spxResult.trackingNo)) {
