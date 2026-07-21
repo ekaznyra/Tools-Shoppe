@@ -11,7 +11,8 @@ const ALLOWED_CHAT_ID = process.env.TELEGRAM_ALLOWED_CHAT_ID || '';
 export async function sendTelegramMessage(
   chatId: string,
   text: string,
-  parseMode: string = 'HTML'
+  parseMode: string = 'HTML',
+  replyMarkup?: any
 ): Promise<boolean> {
   const token = process.env.TELEGRAM_BOT_TOKEN || BOT_TOKEN;
   if (!token) {
@@ -22,14 +23,19 @@ export async function sendTelegramMessage(
   const url = `https://api.telegram.org/bot${token}/sendMessage`;
 
   try {
+    const payload: any = {
+      chat_id: chatId,
+      text,
+      parse_mode: parseMode,
+    };
+    if (replyMarkup) {
+      payload.reply_markup = replyMarkup;
+    }
+
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text,
-        parse_mode: parseMode,
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data = await response.json();

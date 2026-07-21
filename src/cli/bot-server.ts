@@ -23,12 +23,19 @@ import {
 } from '../lib/waybill-watchlist/index.ts';
 import { startWebServer } from '../web/server.ts';
 import { logger } from '../lib/logging/index.ts';
+import { t, type SupportedLanguage, isValidLanguage } from '../lib/i18n/index.ts';
 
 let autoReportInterval: NodeJS.Timeout | null = null;
 const trackedHistory: WaybillTrackingResult[] = [];
+const userLanguages = new Map<string, SupportedLanguage>();
+
+function getUserLang(chatId: string): SupportedLanguage {
+  return userLanguages.get(chatId) || 'vi';
+}
 
 async function handleWaybillSearch(chatId: string, waybillList: string[]): Promise<boolean> {
   if (!waybillList || waybillList.length === 0) return false;
+  const lang = getUserLang(chatId);
 
   // 1. Tra cứu 1 Mã Vận Đơn duy nhất
   if (waybillList.length === 1) {
@@ -36,7 +43,7 @@ async function handleWaybillSearch(chatId: string, waybillList: string[]): Promi
     const carrierName = detectCarrier(waybillNo);
     await sendTelegramMessage(
       chatId,
-      `🚚 <b>ĐANG TRA CỨU MÃ VẬN ĐƠN (${carrierName})...</b>\n\n• Mã vận đơn: <code>${escapeHtml(waybillNo)}</code>\n• Hệ thống đang kiểm tra hành trình vận chuyển thực tế...`
+      `🚚 <b>${t('checking', lang).toUpperCase()} (${carrierName})...</b>\n\n• ${t('trackingNoLabel', lang)}: <code>${escapeHtml(waybillNo)}</code>\n• ${t('checkingCarrier', lang)}`
     );
 
     const spxResult = await trackUniversalWaybill(waybillNo);
@@ -46,46 +53,68 @@ async function handleWaybillSearch(chatId: string, waybillList: string[]): Promi
         trackedHistory.unshift(spxResult);
       }
 
-      // Tính toán Dự báo Thời gian Giao Hàng (ETA Predictor)
       const eta = predictDeliveryETA(spxResult);
 
-      let msg = `🚚 <b>THÔNG TIN CHI TIẾT MÃ VẬN ĐƠN</b>\n\n`;
-      msg += `• <b>Mã vận đơn:</b> <code>${escapeHtml(spxResult.trackingNo)}</code>\n`;
-      msg += `• <b>Đơn vị vận chuyển:</b> ${escapeHtml(spxResult.carrier)}\n`;
-      msg += `• <b>Trạng thái hiện tại:</b> ${escapeHtml(spxResult.status)}\n`;
-      msg += `• <b>🎯 DỰ BÁO THỜI GIAN GIAO HÀNG:</b> <b>${escapeHtml(eta.estimatedTime)}</b>\n`;
+      let msg = `🚚 <b>${t('trackingTitle', lang)}</b>\n\n`;
+      msg += `• <b>${t('trackingNoLabel', lang)}:</b> <code>${escapeHtml(spxResult.trackingNo)}</code>\n`;
+      if (spxResult.orderSn) {
+        msg += `• <b>Mã đơn hàng:</b> <code>${escapeHtml(spxResult.orderSn)}</code>\n`;
+      }
+      if (spxResult.productName) {
+        msg += `• <b>Tên sản phẩm:</b> <i>${escapeHtml(spxResult.productName)}</i> (${spxResult.quantity || 1}x)\n`;
+      }
+      if (spxResult.totalAmount) {
+        msg += `• <b>Tổng tiền:</b> <b>${spxResult.totalAmount.toLocaleString('vi-VN')} VNĐ</b>\n`;
+      }
+      if (spxResult.customerName) {
+        msg += `• <b>Người nhận:</b> <b>${escapeHtml(spxResult.customerName)}</b>\n`;
+      }
+      msg += `• <b>${t('carrierLabel', lang)}:</b> ${escapeHtml(spxResult.carrier)}\n`;
+      msg += `• <b>${t('statusLabel', lang)}:</b> ${escapeHtml(spxResult.status)}\n`;
+      msg += `• <b>${t('etaTitle', lang)}:</b> <b>${escapeHtml(eta.estimatedTime)}</b>\n`;
       msg += `   └ <i>${escapeHtml(eta.note)}</i>\n`;
 
       if (spxResult.latestLocation) {
-        msg += `• <b>Hành trình mới nhất:</b> <i>${escapeHtml(spxResult.latestLocation)}</i>\n`;
+        msg += `• <b>${t('latestLocation', lang)}:</b> <i>${escapeHtml(spxResult.latestLocation)}</i>\n`;
       }
       if (spxResult.latestTime) {
-        msg += `• <b>Cập nhật lúc:</b> <code>${escapeHtml(spxResult.latestTime)}</code>\n`;
+        msg += `• <b>${t('updatedAt', lang)}:</b> <code>${escapeHtml(spxResult.latestTime)}</code>\n`;
       }
       msg += `\n`;
 
       if (spxResult.steps && spxResult.steps.length > 0) {
-        msg += `<b>📍 LỊCH SỬ HÀNH TRÌNH CHI TIẾT (${spxResult.steps.length} mốc):</b>\n\n`;
+        msg += `<b>${t('timelineHistory', lang)} (${spxResult.steps.length}):</b>\n\n`;
         spxResult.steps.forEach((step, idx) => {
           msg += `<b>${idx + 1}. [${escapeHtml(step.time)} - ${escapeHtml(step.date)}]</b>\n`;
           msg += `   └ ${escapeHtml(step.status)}\n\n`;
         });
       }
 
-      // Mẫu tin nhắn nhắc nghe máy nếu đang đi giao
       if ((spxResult.status || '').includes('giao') || (spxResult.latestLocation || '').includes('giao')) {
         const reminderText = generateCustomerDeliveryReminder({
           trackingNoOrOrderSn: spxResult.trackingNo,
           carrierName: spxResult.carrier,
         });
-        msg += `📲 <b>MẪU TIN NHẮC NGHE MÁY NHẬN HÀNG:</b>\n`;
+        msg += `📲 <b>${t('reminderTitle', lang)}:</b>\n`;
         msg += `<code>${escapeHtml(reminderText)}</code>\n\n`;
-        msg += `💡 <i>Sao chép mẫu trên để gửi Zalo / SMS cho người nhận!</i>\n\n`;
+        msg += `${t('reminderTip', lang)}\n\n`;
       }
 
-      msg += `📌 <i>Mẹo: Gõ <code>/theodoi ${spxResult.trackingNo}</code> để tự động nhận thông báo ngay khi bưu cục có cập nhật mới!</i>`;
+      msg += `${t('watchlistTip', lang, { code: spxResult.trackingNo })}`;
 
-      await sendTelegramMessage(chatId, msg);
+      const publicTrackingUrl = `http://localhost:3000/?track=${encodeURIComponent(spxResult.trackingNo)}`;
+      const qrImageUrl = `http://localhost:3000/api/qr?text=${encodeURIComponent(publicTrackingUrl)}`;
+
+      const inlineButtons = {
+        inline_keyboard: [
+          [
+            { text: '🌐 Link Tra Cứu Công Khai', url: publicTrackingUrl },
+            { text: '📱 Mã QR Code', url: qrImageUrl },
+          ],
+        ],
+      };
+
+      await sendTelegramMessage(chatId, msg, 'HTML', inlineButtons);
 
       const alerts = analyzeDeliveryAlerts([spxResult]);
       if (alerts.length > 0) {
@@ -96,7 +125,7 @@ async function handleWaybillSearch(chatId: string, waybillList: string[]): Promi
     } else {
       await sendTelegramMessage(
         chatId,
-        `❌ <b>KHÔNG TÌM THẤY VẬN ĐƠN:</b>\nHệ thống chưa ghi nhận mã vận đơn: <code>${escapeHtml(waybillNo)}</code> hoặc chưa có dữ liệu hành trình.`
+        `${t('notFound', lang)}:\n${t('notFoundMsg', lang)} (<code>${escapeHtml(waybillNo)}</code>)`
       );
       return true;
     }
@@ -105,7 +134,7 @@ async function handleWaybillSearch(chatId: string, waybillList: string[]): Promi
   // 2. Tra cứu HÀNG LOẠT nhiều Mã Vận Đơn cùng lúc
   await sendTelegramMessage(
     chatId,
-    `🚚 <b>ĐANG TRA CỨU HÀNG LOẠT ${waybillList.length} MÃ VẬN ĐƠN...</b>\n\n• Danh sách mã: <code>${waybillList.slice(0, 5).join(', ')}${waybillList.length > 5 ? '...' : ''}</code>\n• Hệ thống đang quét hành trình cho toàn bộ mã...`
+    `🚚 <b>${t('checking', lang).toUpperCase()} ${waybillList.length} MÃ...</b>\n\n• <code>${waybillList.slice(0, 5).join(', ')}${waybillList.length > 5 ? '...' : ''}</code>`
   );
 
   logger.info(`Bat dau tra cuu hang loat ${waybillList.length} ma van don...`);
@@ -121,20 +150,20 @@ async function handleWaybillSearch(chatId: string, waybillList: string[]): Promi
   const shippingCount = results.filter((r) => r.status.includes('đang giao') || r.status.includes('vận chuyển')).length;
   const pendingCount = results.filter((r) => r.status.includes('Chờ')).length;
 
-  let summaryMsg = `📊 <b>BÁO CÁO KẾT QUẢ TRA CỨU HÀNG LOẠT (${results.length} MÃ VẬN ĐƠN)</b>\n\n`;
-  summaryMsg += `• <b>Tổng số mã kiểm tra:</b> <b>${results.length}</b>\n`;
-  summaryMsg += `• ✅ <b>Đã giao thành công:</b> <b>${deliveredCount}</b>\n`;
-  summaryMsg += `• 🚚 <b>Đang vận chuyển / Giao hàng:</b> <b>${shippingCount}</b>\n`;
-  summaryMsg += `• 📦 <b>Chờ lấy hàng:</b> <b>${pendingCount}</b>\n\n`;
-  summaryMsg += `<b>📍 CHI TIẾT THEO TỪNG MÃ VẬN ĐƠN:</b>\n\n`;
+  let summaryMsg = `📊 <b>${t('trackingTitle', lang)} (${results.length})</b>\n\n`;
+  summaryMsg += `• <b>Total:</b> <b>${results.length}</b>\n`;
+  summaryMsg += `• ✅ <b>Success:</b> <b>${deliveredCount}</b>\n`;
+  summaryMsg += `• 🚚 <b>Shipping:</b> <b>${shippingCount}</b>\n`;
+  summaryMsg += `• 📦 <b>Pending:</b> <b>${pendingCount}</b>\n\n`;
+  summaryMsg += `<b>${t('timelineHistory', lang)}:</b>\n\n`;
 
   results.forEach((r, idx) => {
     const eta = predictDeliveryETA(r);
-    summaryMsg += `<b>${idx + 1}. Mã:</b> <code>${escapeHtml(r.trackingNo)}</code> (${escapeHtml(r.carrier)})\n`;
-    summaryMsg += `   • Trạng thái: <b>${escapeHtml(r.status)}</b>\n`;
-    summaryMsg += `   • Dự báo giao: <b>${escapeHtml(eta.estimatedTime)}</b>\n`;
+    summaryMsg += `<b>${idx + 1}. Code:</b> <code>${escapeHtml(r.trackingNo)}</code> (${escapeHtml(r.carrier)})\n`;
+    summaryMsg += `   • ${t('statusLabel', lang)}: <b>${escapeHtml(r.status)}</b>\n`;
+    summaryMsg += `   • ${t('etaTitle', lang)}: <b>${escapeHtml(eta.estimatedTime)}</b>\n`;
     if (r.latestLocation) {
-      summaryMsg += `   • Mới nhất: <i>${escapeHtml(r.latestLocation)}</i>\n`;
+      summaryMsg += `   • ${t('latestLocation', lang)}: <i>${escapeHtml(r.latestLocation)}</i>\n`;
     }
     summaryMsg += `\n`;
   });
@@ -149,7 +178,7 @@ async function handleWaybillSearch(chatId: string, waybillList: string[]): Promi
 
   try {
     const excelPath = await exportWaybillsToExcel(results);
-    await sendTelegramDocument(chatId, excelPath, `📊 Báo cáo tra cứu hàng loạt (${results.length} mã vận đơn)`);
+    await sendTelegramDocument(chatId, excelPath, `📊 Báo cáo tra cứu hàng loạt (${results.length} mã)`);
   } catch (e: any) {
     logger.error({ error: e.message }, 'Loi khi gui file Excel ma van don');
   }
@@ -179,29 +208,33 @@ async function handleCommand(chatId: string, text: string) {
   const parts = trimmed.split(' ');
   const command = parts[0].toLowerCase();
   const args = parts.slice(1).join(' ');
+  const lang = getUserLang(chatId);
 
   logger.info(`Nhan lenh Telegram tu Chat [${chatId}]: ${trimmed}`);
 
+  // 0. Lệnh Chọn Ngôn Ngữ Multi-Language Switcher (VI, EN, JA, ZH, HI)
+  if (command === '/lang' || command === '/language' || command === '/ngonngu') {
+    const inlineKeyboard = {
+      inline_keyboard: [
+        [
+          { text: '🇻🇳 Tiếng Việt', callback_data: 'lang_vi' },
+          { text: '🇺🇸 English', callback_data: 'lang_en' },
+        ],
+        [
+          { text: '🇯🇵 日本語', callback_data: 'lang_ja' },
+          { text: '🇨🇳 中文', callback_data: 'lang_zh' },
+        ],
+        [
+          { text: '🇮🇳 हिन्दी', callback_data: 'lang_hi' },
+        ],
+      ],
+    };
+    await sendTelegramMessage(chatId, t('selectLanguagePrompt', lang), 'HTML', inlineKeyboard);
+    return;
+  }
+
   if (command === '/start' || command === '/help' || command === '/huongdan' || command === '/trogiup') {
-    const helpMsg = `
-🤖 <b>BOT TRA CỨU MÃ VẬN ĐƠN TỰ ĐỘNG</b> 🚚
-
-Hệ thống tra cứu & theo dõi hành trình mã vận đơn tự động 24/7!
-
-🌐 <b>TRANG QUẢN TRỊ WEB:</b> <code>http://localhost:3000</code>
-
-<b>📋 DANH SÁCH LỆNH BẰNG TIẾNG VIỆT THUẦN TÚY:</b>
-• <code>Gửi Mã vận đơn trực tiếp</code> (VD: <code>SPXVN068554112737</code>) để tra cứu tự động
-• <code>/tracuu &lt;mã_vận_đơn&gt;</code> hoặc <code>/tim &lt;mã&gt;</code> - Tra cứu mã vận đơn SPX, GHTK, GHN, ViettelPost...
-• <code>/theodoi &lt;mã_vận_đơn&gt;</code> - Thêm mã vào danh sách TỰ ĐỘNG THEO DÕI & Nhận báo động khi bưu cục chuyển kho
-• <code>/danhsach</code> - Xem các mã vận đơn đang được tự động theo dõi
-• <code>/huytheodoi &lt;mã_vận_đơn&gt;</code> - Bỏ theo dõi mã vận đơn
-• <code>/nhackhach &lt;mã_vận_đơn&gt;</code> - Soạn nhanh tin nhắn mẫu nhắc nghe máy nhận hàng
-• <code>/xuatexcel</code> hoặc <code>/xuatfile</code> - Xuất file Excel báo cáo danh sách vận đơn
-• <code>/baocaotudong</code> - Bật/Tắt lịch tự động gửi báo cáo Excel định kỳ 6 tiếng/lần
-• <code>/trangthai</code> - Kiểm tra trạng thái hoạt động của hệ thống
-    `;
-    await sendTelegramMessage(chatId, helpMsg);
+    await sendTelegramMessage(chatId, t('helpCommandText', lang));
     return;
   }
 
@@ -251,9 +284,9 @@ Hệ thống tra cứu & theo dõi hành trình mã vận đơn tự động 24/
   if (command === '/nhackhach' || command === '/remind') {
     const code = args.trim() || 'SPXVN...';
     const textSnippet = generateCustomerDeliveryReminder({ trackingNoOrOrderSn: code });
-    let msg = `📲 <b>MẪU TIN NHẮN NHẮC NGHE MÁY NHẬN HÀNG:</b>\n\n`;
+    let msg = `📲 <b>${t('reminderTitle', lang)}:</b>\n\n`;
     msg += `<code>${escapeHtml(textSnippet)}</code>\n\n`;
-    msg += `💡 <i>Sao chép mẫu trên để gửi Zalo / SMS cho người nhận!</i>`;
+    msg += `${t('reminderTip', lang)}`;
     await sendTelegramMessage(chatId, msg);
     return;
   }
@@ -285,7 +318,7 @@ Hệ thống tra cứu & theo dõi hành trình mã vận đơn tự động 24/
     const rawInput = (command === '/tracuu' || command === '/tim' || command === '/search') ? args : trimmed;
 
     if (!rawInput) {
-      await sendTelegramMessage(chatId, '⚠️ Vui lòng nhập Mã vận đơn. Ví dụ: <code>/tracuu SPXVN068554112737</code>');
+      await sendTelegramMessage(chatId, `${t('emptyAlert', lang)} Ví dụ: <code>/tracuu SPXVN068554112737</code>`);
       return;
     }
 
@@ -295,7 +328,7 @@ Hệ thống tra cứu & theo dõi hành trình mã vận đơn tự động 24/
     const ok = await handleWaybillSearch(chatId, codes);
     if (ok) return;
 
-    await sendTelegramMessage(chatId, '❌ Không nhận diện được mã vận đơn hợp lệ.');
+    await sendTelegramMessage(chatId, `${t('notFound', lang)}`);
     return;
   }
 
@@ -304,6 +337,7 @@ Hệ thống tra cứu & theo dõi hành trình mã vận đơn tự động 24/
 ℹ️ <b>TRẠNG THÁI HỆ THỐNG TRA CỨU VẬN ĐƠN:</b>
 
 • Trạng thái Bot: 🟢 Đang hoạt động (SPX, GHTK, GHN, ViettelPost, NinjaVan)
+• Ngôn ngữ hiện tại: <b>${lang.toUpperCase()}</b> (Đổi bằng /lang)
 • Trang quản trị Web: 🌐 <code>http://localhost:3000</code>
 • Tự động theo dõi: 🟢 Đang quét ngầm thông báo khi đổi bưu cục
 • Báo cáo tự động: <b>${autoReportInterval ? '🟢 Đang bật (6h/lần)' : '⚪ Tắt (gõ /baocaotudong để bật)'}</b>
@@ -313,7 +347,7 @@ Hệ thống tra cứu & theo dõi hành trình mã vận đơn tự động 24/
     return;
   }
 
-  await sendTelegramMessage(chatId, '❓ Lệnh không hợp lệ. Gõ <code>/huongdan</code> để xem danh sách lệnh Tiếng Việt.');
+  await sendTelegramMessage(chatId, `❓ ${t('error', lang)}: Gõ <code>/help</code> hoặc <code>/lang</code>.`);
 }
 
 async function startBotServer() {
@@ -349,8 +383,24 @@ async function startBotServer() {
       const updates = await getTelegramUpdates(offset, 10);
       for (const update of updates) {
         offset = update.update_id + 1;
-        const message = update.message;
 
+        // Xử lý Inline Keyboard Button Callbacks (Chọn Ngôn Ngữ)
+        if (update.callback_query) {
+          const cb = update.callback_query;
+          const chatId = String(cb.message.chat.id);
+          const data = cb.data;
+
+          if (data && data.startsWith('lang_')) {
+            const selectedLang = data.replace('lang_', '');
+            if (isValidLanguage(selectedLang)) {
+              userLanguages.set(chatId, selectedLang);
+              await sendTelegramMessage(chatId, t('languageUpdated', selectedLang), 'HTML');
+            }
+          }
+        }
+
+        // Xử lý Tin nhắn Text
+        const message = update.message;
         if (message && message.text) {
           const chatId = String(message.chat.id);
           if (isAuthorizedUser(chatId)) {

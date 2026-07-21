@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hệ Thống Tra Cứu Mã Vận Đơn Tự Động 24/7</title>
+  <title data-i18n="appTitle">Hệ Thống Tra Cứu Mã Vận Đơn Tự Động 24/7</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -43,6 +43,28 @@
       margin: 0 auto;
     }
 
+    /* Keyframe Animations */
+    @keyframes floatIcon {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+    }
+
+    @keyframes spinSlow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulseAlert {
+      0% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+      50% { box-shadow: 0 0 22px rgba(239, 68, 68, 0.8); }
+      100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+    }
+
     header {
       display: flex;
       justify-content: space-between;
@@ -50,6 +72,8 @@
       margin-bottom: 28px;
       padding-bottom: 16px;
       border-bottom: 1px solid var(--card-border);
+      flex-wrap: wrap;
+      gap: 16px;
     }
 
     .logo-box {
@@ -59,21 +83,25 @@
     }
 
     .logo-icon {
-      width: 44px;
-      height: 44px;
+      width: 46px;
+      height: 46px;
       background: linear-gradient(135deg, var(--primary), var(--success));
-      border-radius: 12px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
-      box-shadow: 0 4px 14px rgba(6, 182, 212, 0.35);
+      font-size: 24px;
+      box-shadow: 0 4px 14px rgba(6, 182, 212, 0.4);
+      animation: floatIcon 3s ease-in-out infinite;
     }
 
     .logo-text h1 {
       font-size: 20px;
       font-weight: 700;
       letter-spacing: -0.5px;
+      background: linear-gradient(90deg, #38bdf8, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .logo-text p {
@@ -81,12 +109,50 @@
       color: var(--text-muted);
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .lang-selector-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--primary);
+      border-radius: 14px;
+      padding: 6px 14px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 12px rgba(6, 182, 212, 0.25);
+    }
+
+    .lang-globe {
+      font-size: 16px;
+      animation: spinSlow 12s linear infinite;
+    }
+
+    .lang-select {
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 14px;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .lang-select option {
+      background: #0f172a;
+      color: #fff;
+    }
+
     .status-badge {
       display: flex;
       align-items: center;
       gap: 8px;
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.3);
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
       color: var(--success);
       padding: 8px 16px;
       border-radius: 20px;
@@ -109,9 +175,46 @@
       100% { opacity: 1; transform: scale(1); }
     }
 
+    .alert-banner {
+      display: none;
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(245, 158, 11, 0.15));
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: 16px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      animation: pulseAlert 2.5s infinite;
+    }
+
+    .alert-banner-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--danger);
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .alert-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .alert-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 8px 14px;
+      border-radius: 10px;
+      border-left: 3px solid var(--danger);
+    }
+
     .section-card {
       background: var(--card-bg);
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(14px);
       border: 1px solid var(--card-border);
       border-radius: 20px;
       padding: 24px;
@@ -124,17 +227,21 @@
       margin-bottom: 16px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
     }
 
     .search-bar {
       display: flex;
       gap: 12px;
       margin-bottom: 20px;
+      flex-wrap: wrap;
     }
 
     .search-input {
       flex: 1;
+      min-width: 260px;
       background: rgba(15, 23, 42, 0.6);
       border: 1px solid var(--card-border);
       border-radius: 12px;
@@ -142,68 +249,228 @@
       color: var(--text-main);
       font-size: 15px;
       outline: none;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
 
     .search-input:focus {
       border-color: var(--primary);
+      box-shadow: 0 0 14px rgba(6, 182, 212, 0.3);
     }
 
     .btn {
-      background: var(--primary);
+      background: linear-gradient(135deg, var(--primary), var(--primary-hover));
       color: white;
       border: none;
-      padding: 14px 24px;
+      padding: 14px 22px;
       border-radius: 12px;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 600;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 8px;
-      transition: background 0.2s, transform 0.1s;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25);
     }
 
     .btn:hover {
-      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(6, 182, 212, 0.4);
     }
 
-    .btn:active {
-      transform: scale(0.98);
+    .btn-secondary {
+      background: rgba(30, 41, 59, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(51, 65, 85, 0.9);
+      border-color: var(--primary);
+    }
+
+    /* Filter Pills Container */
+    .filter-pills {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .filter-pill {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-pill:hover, .filter-pill.active {
+      background: rgba(6, 182, 212, 0.2);
+      border-color: var(--primary);
+      color: #38bdf8;
+    }
+
+    .dropzone-box {
+      border: 2px dashed rgba(6, 182, 212, 0.4);
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.4);
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      margin-bottom: 20px;
+    }
+
+    .dropzone-box:hover, .dropzone-box.drag-over {
+      border-color: var(--primary);
+      background: rgba(6, 182, 212, 0.1);
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+    }
+
+    .dropzone-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+      animation: floatIcon 3s ease-in-out infinite;
     }
 
     #trackResult {
       display: none;
-      background: rgba(15, 23, 42, 0.8);
-      border: 1px solid rgba(6, 182, 212, 0.3);
-      border-radius: 14px;
-      padding: 20px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(6, 182, 212, 0.35);
+      border-radius: 16px;
+      padding: 24px;
       margin-top: 16px;
+      animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .result-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 12px;
+      padding-bottom: 14px;
       border-bottom: 1px solid var(--card-border);
-      margin-bottom: 16px;
+      margin-bottom: 20px;
     }
 
     .result-badge {
       background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
       color: var(--success);
-      padding: 6px 12px;
-      border-radius: 8px;
+      padding: 6px 14px;
+      border-radius: 10px;
       font-size: 13px;
       font-weight: 600;
+    }
+
+    .order-details-card {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .order-card-header {
+      font-size: 14px;
+      font-weight: 700;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .order-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .info-box {
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .info-icon {
+      font-size: 20px;
+      padding: 8px;
+      background: rgba(6, 182, 212, 0.15);
+      border-radius: 10px;
+      flex-shrink: 0;
+      animation: floatIcon 3s ease-in-out infinite;
+    }
+
+    .info-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .info-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .price-value {
+      color: #34d399;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .timeline-toggle-btn {
+      width: 100%;
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+      border: 1px solid rgba(6, 182, 212, 0.35);
+      color: #38bdf8;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.25s ease;
+      margin-top: 16px;
+    }
+
+    .timeline-toggle-btn:hover {
+      background: rgba(6, 182, 212, 0.15);
+      border-color: var(--primary);
+      box-shadow: 0 4px 14px rgba(6, 182, 212, 0.25);
+    }
+
+    #timelineWrapper {
+      display: none;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--card-border);
+      animation: slideDown 0.3s ease-out;
     }
 
     .timeline {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      margin-top: 12px;
+      gap: 14px;
     }
 
     .timeline-item {
@@ -217,8 +484,8 @@
       content: '';
       position: absolute;
       left: 7px;
-      top: 20px;
-      bottom: -12px;
+      top: 22px;
+      bottom: -14px;
       width: 2px;
       background: var(--card-border);
     }
@@ -246,6 +513,40 @@
     .timeline-content p {
       font-size: 12px;
       color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Modal Mã QR Code */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 15, 25, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-box {
+      background: rgba(30, 41, 59, 0.95);
+      border: 1px solid rgba(6, 182, 212, 0.4);
+      border-radius: 20px;
+      padding: 28px;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      animation: slideDown 0.25s ease-out;
+    }
+
+    .qr-container {
+      background: #fff;
+      padding: 16px;
+      border-radius: 16px;
+      display: inline-block;
+      margin: 16px 0;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     }
   </style>
 </head>
@@ -255,52 +556,597 @@
       <div class="logo-box">
         <div class="logo-icon">🚚</div>
         <div class="logo-text">
-          <h1>Hệ Thống Tra Cứu Mã Vận Đơn Tự Động</h1>
-          <p>Tra Cứu & Theo Dõi Bưu Kiện Đa Kênh Công Khai (SPX, GHTK, GHN...)</p>
+          <h1 data-i18n="appTitle">Hệ Thống Tra Cứu Mã Vận Đơn Tự Động</h1>
+          <p data-i18n="appSubtitle">Tra Cứu & Theo Dõi Bưu Kiện Đa Kênh Công Khai (SPX, GHTK, GHN...)</p>
         </div>
       </div>
-      <div class="status-badge">
-        <div class="status-dot"></div>
-        <span>HỆ THỐNG ĐANG HOẠT ĐỘNG 24/7</span>
+
+      <div class="header-actions">
+        <!-- Multi-Language Switcher (VI, EN, JA, ZH, HI) -->
+        <div class="lang-selector-box">
+          <span class="lang-globe">🌐</span>
+          <select id="langSelect" class="lang-select" onchange="changeLanguage(this.value)">
+            <option value="vi">🇻🇳 Tiếng Việt</option>
+            <option value="en">🇺🇸 English</option>
+            <option value="ja">🇯🇵 日本語</option>
+            <option value="zh">🇨🇳 中文</option>
+            <option value="hi">🇮🇳 हिन्दी</option>
+          </select>
+        </div>
+
+        <div class="status-badge">
+          <div class="status-dot"></div>
+          <span data-i18n="systemActive">HỆ THỐNG ĐANG HOẠT ĐỘNG 24/7</span>
+        </div>
       </div>
     </header>
+
+    <!-- Bảng Cảnh Báo Khẩn Cấp (Delivery Alert Banner) -->
+    <div class="alert-banner" id="alertBanner">
+      <div class="alert-banner-header">
+        <span data-i18n="alertBannerTitle">🚨 PHÁT HIỆN ĐƠN HÀNG CÓ CẢNH BÁO KHẨN CẤP (KHÔNG LIÊN LẠC ĐƯỢC / NGÂM KHO)</span>
+        <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="document.getElementById('alertBanner').style.display='none'">✕</button>
+      </div>
+      <div class="alert-list" id="alertListContainer"></div>
+    </div>
 
     <!-- Live Waybill Tracker -->
     <div class="section-card">
       <div class="section-title">
-        <span>🔍</span> Tra Cứu Hành Trình Mã Vận Đơn Trực Tiếp
+        <div><span>🔍</span> <span data-i18n="searchTitle">Tra Cứu Hành Trình Mã Vận Đơn Trực Tiếp</span></div>
+        <a href="/api/export" class="btn btn-secondary" style="text-decoration: none; font-size: 13px; padding: 8px 14px;">
+          <span data-i18n="downloadExcel">📥 Tải Báo Cáo Excel</span>
+        </a>
       </div>
+
+      <!-- Kéo Thả Import Excel Hàng Loạt Dropzone Box -->
+      <div class="dropzone-box" id="dropzone" onclick="document.getElementById('fileInput').click()">
+        <div class="dropzone-icon">📁</div>
+        <h4 style="font-size: 15px; font-weight: 700; color: #38bdf8;" data-i18n="dragDropTitle">Kéo & Thả File Excel / CSV Mã Vận Đơn Vào Đây Để Tra Cứu Hàng Loạt</h4>
+        <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Hoặc nhấp vào đây để chọn file từ máy tính (Hỗ trợ file Shopee Seller Export)</p>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.txt" style="display: none;" onchange="handleFileUpload(this.files)" />
+      </div>
+
+      <!-- Bộ Lọc Trạng Thái Đơn Hàng Thông Minh -->
+      <div class="filter-pills" id="filterPills">
+        <div class="filter-pill active" onclick="applyFilter('ALL', this)"><span data-i18n="filterAll">Tất Cả</span></div>
+        <div class="filter-pill" onclick="applyFilter('SHIPPING', this)"><span data-i18n="filterShipping">🚚 Đang Giao</span></div>
+        <div class="filter-pill" onclick="applyFilter('DELIVERED', this)"><span data-i18n="filterDelivered">✅ Thành Công</span></div>
+        <div class="filter-pill" onclick="applyFilter('ALERT', this)"><span data-i18n="filterAlert">🚨 Cảnh Báo</span></div>
+      </div>
+
       <div class="search-bar">
-        <input type="text" id="trackInput" class="search-input" placeholder="Nhập Mã Vận Đơn (VD: SPXVN068554112737)..." />
+        <input type="text" id="trackInput" class="search-input" data-i18n-placeholder="searchPlaceholder" placeholder="Nhập Mã Vận Đơn (VD: SPXVN068554112737)..." />
         <button class="btn" onclick="doTrack()">
-          <span>🔍</span> Tra Cứu Ngay
+          <span>🔍</span> <span data-i18n="searchBtn">Tra Cứu Ngay</span>
         </button>
       </div>
 
       <div id="trackResult">
         <div class="result-header">
           <div>
-            <h3 id="resNo" style="font-size: 16px; font-weight: 700;">-</h3>
-            <p id="resCarrier" style="font-size: 13px; color: var(--text-muted);">-</p>
+            <h3 id="resNo" style="font-size: 18px; font-weight: 700; color: #38bdf8;">-</h3>
+            <p id="resCarrier" style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">-</p>
           </div>
           <div class="result-badge" id="resStatus">-</div>
         </div>
-        <div class="timeline" id="timelineList"></div>
+
+        <!-- Thẻ Thông Tin Chi Tiết Sản Phẩm & Đơn Hàng Sang Trọng -->
+        <div id="resOrderCard" class="order-details-card" style="display: none;">
+          <div class="order-card-header">
+            <div><span>✨</span> <span data-i18n="orderCardTitle">THÔNG TIN CHI TIẾT ĐƠN HÀNG & SẢN PHẨM</span></div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="copyCustomerReminder()">
+                <span data-i18n="copyReminder">📲 Sao Chép Tin Nhắc Khách</span>
+              </button>
+              <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="openQRModal()">
+                <span data-i18n="generateQR">📱 Mã QR & Link Tra Cứu Khách</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="order-grid">
+            <div class="info-box" id="boxProduct">
+              <div class="info-icon">📦</div>
+              <div>
+                <div class="info-label">Sản Phẩm</div>
+                <div class="info-value" id="valProductName">-</div>
+              </div>
+            </div>
+
+            <div class="info-box" id="boxOrderSn">
+              <div class="info-icon">🆔</div>
+              <div>
+                <div class="info-label">Mã Đơn Shopee</div>
+                <div class="info-value" id="valOrderSn">-</div>
+              </div>
+            </div>
+
+            <div class="info-box" id="boxTotal">
+              <div class="info-icon">💰</div>
+              <div>
+                <div class="info-label">Tổng Giá Trị</div>
+                <div class="info-value price-value" id="valTotalAmount">-</div>
+              </div>
+            </div>
+
+            <div class="info-box" id="boxCustomer">
+              <div class="info-icon">👤</div>
+              <div>
+                <div class="info-label">Người Nhận</div>
+                <div class="info-value" id="valCustomerName">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nút bấm ẩn/hiện Lịch sử hành trình -->
+        <button id="toggleTimelineBtn" class="timeline-toggle-btn" onclick="toggleTimeline()" style="display: none;">
+          <span id="toggleTimelineText" data-i18n="viewTimeline">📜 Xem Lịch Sử Hành Trình Chi Tiết</span>
+        </button>
+
+        <div id="timelineWrapper">
+          <div class="timeline" id="timelineList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Hiển Thị Mã QR Code Vector SVG & Link Công Khai -->
+  <div class="modal-overlay" id="qrModal">
+    <div class="modal-box">
+      <h3 style="font-size: 16px; font-weight: 700; color: #38bdf8;">📱 Mã QR & Link Tra Cứu Cho Khách</h3>
+      <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Dán mã QR này lên tem gói hàng hoặc gửi link cho người nhận tra cứu</p>
+
+      <div class="qr-container" id="qrSvgBox"></div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button class="btn" style="justify-content: center;" onclick="copyPublicLink()">
+          <span data-i18n="copyPublicLink">📋 Sao Chép Link Tra Cứu</span>
+        </button>
+        <button class="btn btn-secondary" style="justify-content: center;" onclick="downloadQRSVG()">
+          <span data-i18n="downloadQR">📥 Tải Mã QR Vector SVG (Để in tem)</span>
+        </button>
+        <button class="btn btn-secondary" style="justify-content: center; background: transparent; border: none; color: var(--text-muted);" onclick="closeQRModal()">
+          Đóng
+        </button>
       </div>
     </div>
   </div>
 
   <script>
+    const translations = {
+      vi: {
+        appTitle: "Hệ Thống Tra Cứu Mã Vận Đơn Tự Động",
+        appSubtitle: "Tra Cứu & Theo Dõi Bưu Kiện Đa Kênh Công Khai (SPX, GHTK, GHN...)",
+        systemActive: "HỆ THỐNG ĐANG HOẠT ĐỘNG 24/7",
+        searchTitle: "Tra Cứu Hành Trình Mã Vận Đơn Trực Tiếp",
+        searchPlaceholder: "Nhập Mã Vận Đơn (VD: SPXVN068554112737)...",
+        searchBtn: "Tra Cứu Ngay",
+        emptyAlert: "Vui lòng nhập Mã vận đơn!",
+        checking: "Đang kiểm tra...",
+        scanning: "⏳ Đang quét",
+        checkingCarrier: "Hệ thống đang kiểm tra dịch vụ vận chuyển...",
+        noTimeline: "Chưa có mốc lịch sử chi tiết.",
+        notFound: "❌ Không tìm thấy",
+        notFoundMsg: "Không tìm thấy dữ liệu vận đơn.",
+        error: "❌ Lỗi",
+        apiError: "Lỗi kết nối API tra cứu.",
+        viewTimeline: "📜 Xem Lịch Sử Hành Trình Chi Tiết",
+        hideTimeline: "🔼 Ẩn Lịch Sử Hành Trình",
+        orderCardTitle: "THÔNG TIN CHI TIẾT ĐƠN HÀNG & SẢN PHẨM",
+        dragDropTitle: "Kéo & Thả File Excel / CSV Mã Vận Đơn Vào Đây Để Tra Cứu Hàng Loạt",
+        generateQR: "📱 Mã QR & Link Tra Cứu Khách",
+        copyPublicLink: "📋 Sao Chép Link Tra Cứu",
+        downloadQR: "📥 Tải Mã QR Vector SVG",
+        alertBannerTitle: "🚨 PHÁT HIỆN ĐƠN HÀNG CÓ CẢNH BÁO KHẨN CẤP (KHÔNG LIÊN LẠC ĐƯỢC / NGÂM KHO)",
+        copyReminder: "📲 Sao Chép Tin Nhắc Khách",
+        downloadExcel: "📥 Tải Báo Cáo Excel",
+        filterAll: "Tất Cả",
+        filterShipping: "🚚 Đang Giao",
+        filterDelivered: "✅ Thành Công",
+        filterAlert: "🚨 Cảnh Báo"
+      },
+      en: {
+        appTitle: "Automatic Waybill Tracking System",
+        appSubtitle: "Public Multi-Carrier Parcel Tracking (SPX, GHTK, GHN...)",
+        systemActive: "SYSTEM ACTIVE 24/7",
+        searchTitle: "Live Waybill Journey Tracking",
+        searchPlaceholder: "Enter Tracking No (e.g. SPXVN068554112737)...",
+        searchBtn: "Track Now",
+        emptyAlert: "Please enter a tracking number!",
+        checking: "Checking...",
+        scanning: "⏳ Scanning",
+        checkingCarrier: "System is connecting to courier service...",
+        noTimeline: "No detailed history available yet.",
+        notFound: "❌ Not Found",
+        notFoundMsg: "Waybill data not found.",
+        error: "❌ Error",
+        apiError: "API lookup connection error.",
+        viewTimeline: "📜 View Detailed Journey History",
+        hideTimeline: "🔼 Hide Journey History",
+        orderCardTitle: "ORDER & PRODUCT DETAILS",
+        dragDropTitle: "Drag & Drop Excel / CSV Waybill Files Here for Bulk Tracking",
+        generateQR: "📱 QR Code & Share Link",
+        copyPublicLink: "📋 Copy Tracking Link",
+        downloadQR: "📥 Download Vector SVG QR",
+        alertBannerTitle: "🚨 EMERGENCY DELIVERY ALERTS DETECTED (NON-CONTACT / HUB STUCK)",
+        copyReminder: "📲 Copy Customer Reminder",
+        downloadExcel: "📥 Export Excel Report",
+        filterAll: "All",
+        filterShipping: "🚚 Shipping",
+        filterDelivered: "✅ Delivered",
+        filterAlert: "🚨 Alerts"
+      },
+      ja: {
+        appTitle: "自動配送追跡システム 24/7",
+        appSubtitle: "マルチキャリア荷物追跡 (SPX, GHTK, GHN...)",
+        systemActive: "システム稼働中 24/7",
+        searchTitle: "リアルタイム伝票番号検索",
+        searchPlaceholder: "追跡番号を入力 (例: SPXVN068554112737)...",
+        searchBtn: "今すぐ検索",
+        emptyAlert: "追跡番号を入力してください！",
+        checking: "確認中...",
+        scanning: "⏳ スキャン中",
+        checkingCarrier: "配送サービスに接続しています...",
+        noTimeline: "詳細な履歴データがまだありません。",
+        notFound: "❌ 見つかりません",
+        notFoundMsg: "伝票データが見つかりませんでした。",
+        error: "❌ エラー",
+        apiError: "API検索接続エラー。",
+        viewTimeline: "📜 配送履歴の詳細を見る",
+        hideTimeline: "🔼 履歴を非表示にする",
+        orderCardTitle: "注文および商品の詳細",
+        dragDropTitle: "ここにExcel / CSVファイルをドラッグ＆ドロップして一括追跡",
+        generateQR: "📱 QRコード＆公開共有リンク",
+        copyPublicLink: "📋 追跡リンクをコピー",
+        downloadQR: "📥 Vector SVG QRをダウンロード",
+        alertBannerTitle: "🚨 緊急配達警告が検出されました（不通 / 保管遅延）",
+        copyReminder: "📲 リマインダーをコピー",
+        downloadExcel: "📥 Excelを出力",
+        filterAll: "すべて",
+        filterShipping: "🚚 配送中",
+        filterDelivered: "✅ 配達完了",
+        filterAlert: "🚨 警告"
+      },
+      zh: {
+        appTitle: "自动运单号实时查询系统",
+        appSubtitle: "多渠道快递包裹公开追踪 (SPX, GHTK, GHN...)",
+        systemActive: "系统全天候运行 24/7",
+        searchTitle: "实时运单轨迹查询",
+        searchPlaceholder: "请输入快递运单号 (例如: SPXVN068554112737)...",
+        searchBtn: "立即查询",
+        emptyAlert: "请输入快递运单号！",
+        checking: "正在查询...",
+        scanning: "⏳ 正在扫描",
+        checkingCarrier: "系统正在连接快递服务...",
+        noTimeline: "暂无详细历史轨迹。",
+        notFound: "❌ 未找到",
+        notFoundMsg: "未找到该运单号数据。",
+        error: "❌ 查询错误",
+        apiError: "API 查询连接失败。",
+        viewTimeline: "📜 查看详细全程物流轨迹",
+        hideTimeline: "🔼 折叠物流轨迹",
+        orderCardTitle: "订单及商品详细信息",
+        dragDropTitle: "拖拽 Excel / CSV 运单文件至此处进行批量追踪",
+        generateQR: "📱 二维码及公开分享链接",
+        copyPublicLink: "📋 复制物流链接",
+        downloadQR: "📥 下载 SVG 二维码",
+        alertBannerTitle: "🚨 检测到紧急物流预警（联系失败 / 滞留）",
+        copyReminder: "📲 复制提醒文字",
+        downloadExcel: "📥 导出 Excel 报表",
+        filterAll: "全部",
+        filterShipping: "🚚 运输中",
+        filterDelivered: "✅ 已送达",
+        filterAlert: "🚨 预警"
+      },
+      hi: {
+        appTitle: "स्वचालित वेबिल ट्रैकिंग सिस्टम 24/7",
+        appSubtitle: "सार्वजनिक बहु-कूरियर पार्सल ट्रैकिंग (SPX, GHTK, GHN...)",
+        systemActive: "सिस्टम 24/7 सक्रिय है",
+        searchTitle: "लाइव वेबिल यात्रा ट्रैकिंग",
+        searchPlaceholder: "ट्रैकिंग नंबर दर्ज करें (उदा. SPXVN068554112737)...",
+        searchBtn: "अभी खोजें",
+        emptyAlert: "कृपया एक ट्रैकिंग नंबर दर्ज करें!",
+        checking: "जाँच की जा रही है...",
+        scanning: "⏳ स्कैनिंग",
+        checkingCarrier: "सिस्टम कूरियर सेवा से कनेक्ट हो रहा है...",
+        noTimeline: "अभी तक कोई विस्तृत इतिहास उपलब्ध नहीं है।",
+        notFound: "❌ नहीं मिला",
+        notFoundMsg: "वेबिल डेटा नहीं मिला।",
+        error: "❌ त्रुटि",
+        apiError: "API लुकअप कनेक्शन त्रुटि।",
+        viewTimeline: "📜 विस्तृत यात्रा इतिहास देखें",
+        hideTimeline: "🔼 यात्रा इतिहास छिपाएं",
+        orderCardTitle: "ऑर्डर और उत्पाद का विवरण",
+        dragDropTitle: "थोक ट्रैकिंग के लिए एक्सेल / सीएसवी फाइलें यहां ड्रैग एंड ड्रॉप करें",
+        generateQR: "📱 क्यूआर कोड और सार्वजनिक शेयर लिंक",
+        copyPublicLink: "📋 ट्रैकिंग लिंक कॉपी करें",
+        downloadQR: "📥 क्यूआर कोड डाउनलोड करें",
+        alertBannerTitle: "🚨 आपातकालीन डिलीवरी अलर्ट (संपर्क रहित / ठहराव)",
+        copyReminder: "📲 रिमाइंडर कॉपी करें",
+        downloadExcel: "📥 एक्सेल रिपोर्ट डाउनलोड करें",
+        filterAll: "सभी",
+        filterShipping: "🚚 शिपिंग",
+        filterDelivered: "✅ डिलीवर हुआ",
+        filterAlert: "🚨 अलर्ट"
+      }
+    };
+
+    let currentLang = localStorage.getItem('user_lang') || 'vi';
+    let isTimelineOpen = false;
+    let currentTrackingNo = '';
+    let currentCarrierName = '';
+    let currentBatchResults = [];
+
+    function changeLanguage(lang) {
+      if (!translations[lang]) return;
+      currentLang = lang;
+      localStorage.setItem('user_lang', lang);
+      document.getElementById('langSelect').value = lang;
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (translations[lang][key]) {
+          el.innerText = translations[lang][key];
+        }
+      });
+
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (translations[lang][key]) {
+          el.setAttribute('placeholder', translations[lang][key]);
+        }
+      });
+
+      const t = translations[currentLang] || translations.vi;
+      document.getElementById('toggleTimelineText').innerText = isTimelineOpen ? t.hideTimeline : t.viewTimeline;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      changeLanguage(currentLang);
+      setupDragAndDrop();
+
+      const params = new URLSearchParams(window.location.search);
+      const autoTrackCode = params.get('track') || params.get('code');
+      if (autoTrackCode) {
+        document.getElementById('trackInput').value = autoTrackCode;
+        doTrack();
+      }
+    });
+
+    // Phát âm thanh báo động khẩn cấp bằng Web Audio API
+    function playAlertChime() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
+
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.35);
+      } catch (e) {}
+    }
+
+    function setupDragAndDrop() {
+      const dropzone = document.getElementById('dropzone');
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, e => {
+          e.preventDefault();
+          e.stopPropagation();
+        }, false);
+      });
+
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, () => dropzone.classList.add('drag-over'), false);
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, () => dropzone.classList.remove('drag-over'), false);
+      });
+
+      dropzone.addEventListener('drop', e => {
+        const dt = e.dataTransfer;
+        handleFileUpload(dt.files);
+      });
+    }
+
+    async function handleFileUpload(files) {
+      if (!files || files.length === 0) return;
+      const file = files[0];
+      const reader = new FileReader();
+
+      reader.onload = async function(e) {
+        const textContent = e.target.result;
+        const t = translations[currentLang] || translations.vi;
+
+        const resBox = document.getElementById('trackResult');
+        resBox.style.display = 'block';
+        document.getElementById('resNo').innerText = '📁 FILE: ' + file.name;
+        document.getElementById('resCarrier').innerText = t.checking;
+        document.getElementById('resStatus').innerText = t.scanning;
+        document.getElementById('resOrderCard').style.display = 'none';
+
+        try {
+          const res = await fetch('/api/import-excel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: textContent })
+          });
+          const data = await res.json();
+
+          if (data.success && data.results) {
+            currentBatchResults = data.results;
+            document.getElementById('resStatus').innerText = `✅ ĐÃ QUÉT ${data.results.length} MÃ`;
+            document.getElementById('toggleTimelineBtn').style.display = 'flex';
+            renderBatchResults(data.results);
+
+            if (data.alerts && data.alerts.length > 0) {
+              renderAlertBanner(data.alerts);
+              playAlertChime();
+            }
+          } else {
+            document.getElementById('resStatus').innerText = t.notFound;
+            document.getElementById('timelineList').innerHTML = `<p style="color: var(--danger);">${data.errorMessage}</p>`;
+          }
+        } catch (err) {
+          document.getElementById('resStatus').innerText = t.error;
+          document.getElementById('timelineList').innerHTML = `<p style="color: var(--danger);">${t.apiError}</p>`;
+        }
+      };
+
+      reader.readAsText(file);
+    }
+
+    function renderBatchResults(items) {
+      let tHtml = `<p style="font-weight: 700; color: #34d399; margin-bottom: 12px;">📊 BÁO CÁO KẾT QUẢ (${items.length} MÃ VẬN ĐƠN):</p>`;
+      items.forEach((r, idx) => {
+        tHtml += `<div class="timeline-item" data-status="${r.status}">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <h4>${idx + 1}. [${r.trackingNo}] - ${r.carrier}</h4>
+            <p>Trạng thái: <b>${r.status}</b> ${r.latestLocation ? '• ' + r.latestLocation : ''}</p>
+          </div>
+        </div>`;
+      });
+      document.getElementById('timelineList').innerHTML = tHtml;
+    }
+
+    // Smart Status Filter Pills
+    function applyFilter(filterType, element) {
+      document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+      element.classList.add('active');
+
+      if (!currentBatchResults || currentBatchResults.length === 0) return;
+
+      let filtered = currentBatchResults;
+      if (filterType === 'SHIPPING') {
+        filtered = currentBatchResults.filter(r => (r.status || '').includes('giao') || (r.status || '').includes('chuyển'));
+      } else if (filterType === 'DELIVERED') {
+        filtered = currentBatchResults.filter(r => (r.status || '').includes('thành công') || (r.status || '').includes('Đã giao'));
+      } else if (filterType === 'ALERT') {
+        filtered = currentBatchResults.filter(r => (r.status || '').includes('thất bại') || (r.status || '').includes('hoàn') || (r.status || '').includes('hủy'));
+      }
+
+      renderBatchResults(filtered);
+    }
+
+    function renderAlertBanner(alerts) {
+      const banner = document.getElementById('alertBanner');
+      const container = document.getElementById('alertListContainer');
+      banner.style.display = 'block';
+
+      let html = '';
+      alerts.forEach(a => {
+        html += `<div class="alert-item">
+          <div>
+            <strong style="color: #f8fafc;">[${a.trackingNo}]</strong> - <i>${a.reason}</i>
+          </div>
+          <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="document.getElementById('trackInput').value='${a.trackingNo}'; doTrack();">
+            🔍 Check Ngay
+          </button>
+        </div>`;
+      });
+      container.innerHTML = html;
+    }
+
+    function toggleTimeline() {
+      const wrapper = document.getElementById('timelineWrapper');
+      const textBtn = document.getElementById('toggleTimelineText');
+      const t = translations[currentLang] || translations.vi;
+
+      if (isTimelineOpen) {
+        wrapper.style.display = 'none';
+        isTimelineOpen = false;
+        textBtn.innerText = t.viewTimeline;
+      } else {
+        wrapper.style.display = 'block';
+        isTimelineOpen = true;
+        textBtn.innerText = t.hideTimeline;
+      }
+    }
+
+    function copyCustomerReminder() {
+      if (!currentTrackingNo) return;
+      const carrierStr = currentCarrierName ? ` [${currentCarrierName}]` : '';
+      const text = `Dạ chào bạn! Đơn hàng Shopee mã ${currentTrackingNo}${carrierStr} của bạn đang được đơn vị vận chuyển đi giao đến. Bạn vui lòng để ý giữ điện thoại để nhận hàng giúp Shop nhé. Cảm ơn bạn rất nhiều! ❤️`;
+
+      navigator.clipboard.writeText(text).then(() => {
+        alert('✅ Đã sao chép tin nhắn nhắc nghe máy nhận hàng gửi khách!');
+      });
+    }
+
+    async function openQRModal() {
+      if (!currentTrackingNo) return;
+      const modal = document.getElementById('qrModal');
+      const qrBox = document.getElementById('qrSvgBox');
+      const publicUrl = `${window.location.origin}/?track=${currentTrackingNo}`;
+
+      try {
+        const res = await fetch(`/api/qr?text=${encodeURIComponent(publicUrl)}&size=200`);
+        const svgText = await res.text();
+        qrBox.innerHTML = svgText;
+        modal.style.display = 'flex';
+      } catch (e) {
+        alert('Lỗi tải mã QR Code.');
+      }
+    }
+
+    function closeQRModal() {
+      document.getElementById('qrModal').style.display = 'none';
+    }
+
+    function copyPublicLink() {
+      if (!currentTrackingNo) return;
+      const publicUrl = `${window.location.origin}/?track=${currentTrackingNo}`;
+      navigator.clipboard.writeText(publicUrl).then(() => {
+        alert('✅ Đã sao chép đường dẫn tra cứu công khai cho khách hàng!');
+      });
+    }
+
+    function downloadQRSVG() {
+      const qrBox = document.getElementById('qrSvgBox');
+      const svgData = qrBox.innerHTML;
+      const blob = new Blob([svgData], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `QR_Tracking_${currentTrackingNo}.svg`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
     async function doTrack() {
       const code = document.getElementById('trackInput').value.trim();
-      if (!code) return alert('Vui lòng nhập Mã vận đơn!');
+      const t = translations[currentLang] || translations.vi;
+
+      if (!code) return alert(t.emptyAlert);
+      currentTrackingNo = code;
 
       const resBox = document.getElementById('trackResult');
       resBox.style.display = 'block';
       document.getElementById('resNo').innerText = code;
-      document.getElementById('resCarrier').innerText = 'Đang kiểm tra...';
-      document.getElementById('resStatus').innerText = '⏳ Đang quét';
-      document.getElementById('timelineList').innerHTML = '<p style="color: var(--text-muted);">Hệ thống đang kiểm tra dịch vụ vận chuyển...</p>';
+      document.getElementById('resCarrier').innerText = t.checking;
+      document.getElementById('resStatus').innerText = t.scanning;
+      document.getElementById('resOrderCard').style.display = 'none';
+      document.getElementById('toggleTimelineBtn').style.display = 'none';
+
+      const timelineWrapper = document.getElementById('timelineWrapper');
+      timelineWrapper.style.display = 'none';
+      isTimelineOpen = false;
+      document.getElementById('toggleTimelineText').innerText = t.viewTimeline;
+
+      document.getElementById('timelineList').innerHTML = `<p style="color: var(--text-muted);">${t.checkingCarrier}</p>`;
 
       try {
         const res = await fetch('/api/track', {
@@ -311,9 +1157,47 @@
         const data = await res.json();
 
         if (data.success) {
+          currentCarrierName = data.carrier || '';
           document.getElementById('resNo').innerText = data.trackingNo;
-          document.getElementById('resCarrier').innerText = data.carrier || 'Đơn vị vận chuyển';
+          document.getElementById('resCarrier').innerText = data.carrier || 'Courier';
           document.getElementById('resStatus').innerText = data.status;
+
+          // Hiển thị Thẻ Chi Tiết Đơn Hàng Sang Trọng
+          if (data.productName || data.orderSn || data.totalAmount || data.customerName) {
+            document.getElementById('resOrderCard').style.display = 'block';
+            
+            if (data.productName) {
+              document.getElementById('boxProduct').style.display = 'flex';
+              document.getElementById('valProductName').innerText = data.productName + (data.quantity ? ` (x${data.quantity})` : '');
+            } else {
+              document.getElementById('boxProduct').style.display = 'none';
+            }
+
+            if (data.orderSn) {
+              document.getElementById('boxOrderSn').style.display = 'flex';
+              document.getElementById('valOrderSn').innerText = data.orderSn;
+            } else {
+              document.getElementById('boxOrderSn').style.display = 'none';
+            }
+
+            if (data.totalAmount) {
+              document.getElementById('boxTotal').style.display = 'flex';
+              document.getElementById('valTotalAmount').innerText = data.totalAmount.toLocaleString('vi-VN') + ' VNĐ';
+            } else {
+              document.getElementById('boxTotal').style.display = 'none';
+            }
+
+            if (data.customerName) {
+              document.getElementById('boxCustomer').style.display = 'flex';
+              document.getElementById('valCustomerName').innerText = data.customerName;
+            } else {
+              document.getElementById('boxCustomer').style.display = 'none';
+            }
+          } else {
+            document.getElementById('resOrderCard').style.display = 'none';
+          }
+
+          document.getElementById('toggleTimelineBtn').style.display = 'flex';
 
           if (data.steps && data.steps.length > 0) {
             let tHtml = '';
@@ -328,15 +1212,15 @@
             });
             document.getElementById('timelineList').innerHTML = tHtml;
           } else {
-            document.getElementById('timelineList').innerHTML = '<p style="color: var(--text-muted);">Chưa có mốc lịch sử chi tiết.</p>';
+            document.getElementById('timelineList').innerHTML = `<p style="color: var(--text-muted);">${t.noTimeline}</p>`;
           }
         } else {
-          document.getElementById('resStatus').innerText = '❌ Không tìm thấy';
-          document.getElementById('timelineList').innerHTML = `<p style="color: var(--danger);">${data.errorMessage || 'Không tìm thấy dữ liệu vận đơn.'}</p>`;
+          document.getElementById('resStatus').innerText = t.notFound;
+          document.getElementById('timelineList').innerHTML = `<p style="color: var(--danger);">${data.errorMessage || t.notFoundMsg}</p>`;
         }
       } catch (e) {
-        document.getElementById('resStatus').innerText = '❌ Lỗi';
-        document.getElementById('timelineList').innerHTML = '<p style="color: var(--danger);">Lỗi kết nối API tra cứu.</p>';
+        document.getElementById('resStatus').innerText = t.error;
+        document.getElementById('timelineList').innerHTML = `<p style="color: var(--danger);">${t.apiError}</p>`;
       }
     }
   </script>

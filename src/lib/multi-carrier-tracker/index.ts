@@ -1,6 +1,7 @@
 import { chromium, type Browser } from 'playwright';
 import fs from 'fs';
 import { trackSPXWaybill, type WaybillTrackingResult } from '../spx-tracker/index.ts';
+import { findOrders } from '../database/index.ts';
 import { logger } from '../logging/index.ts';
 
 function findSystemBrowserExecutable(): string | undefined {
@@ -76,25 +77,50 @@ export async function trackGHTK(trackingNo: string): Promise<WaybillTrackingResu
 
 /**
  * Tra cứu Mã Vận Đơn đa kênh (Hỗ trợ SPX, GHTK, GHN, NinjaVan, ViettelPost)
+ * Tự động làm giàu dữ liệu từ CSDL Đơn hàng Shopee đã lưu (Tên sản phẩm, Tên khách, Mã đơn, Tổng tiền)
  */
 export async function trackUniversalWaybill(trackingNo: string): Promise<WaybillTrackingResult> {
   const carrier = detectCarrier(trackingNo);
+  let result: WaybillTrackingResult;
 
   if (carrier === 'GHTK') {
     const ghtkRes = await trackGHTK(trackingNo);
-    if (ghtkRes.success) return ghtkRes;
+    if (ghtkRes.success) {
+      result = ghtkRes;
+    } else {
+      const spxRes = await trackSPXWaybill(trackingNo);
+      result = spxRes || ghtkRes;
+    }
+  } else {
+    const spxRes = await trackSPXWaybill(trackingNo);
+    if (spxRes) {
+      result = spxRes;
+    } else {
+      result = {
+        trackingNo,
+        status: '❓ Chưa ghi nhận hành trình',
+        carrier: carrier !== 'UNKNOWN' ? carrier : 'Vận chuyển',
+        steps: [],
+        success: false,
+        errorMessage: 'Không tìm thấy dữ liệu vận đơn.',
+      };
+    }
   }
 
-  // Tra cứu qua SPX Tracker mặc định
-  const spxRes = await trackSPXWaybill(trackingNo);
-  if (spxRes) return spxRes;
+  // Khớp dữ liệu Đơn hàng từ CSDL (Shopee Seller Sync) để lấy Tên sản phẩm, Người nhận, Tổng tiền, Mã đơn
+  try {
+    const matchedOrders = await findOrders(trackingNo);
+    if (matchedOrders && matchedOrders.length > 0) {
+      const order = matchedOrders[0];
+      result.orderSn = order.orderSn;
+      result.productName = order.productName;
+      result.quantity = order.quantity;
+      result.totalAmount = order.totalAmount;
+      result.customerName = (order as any).customerName || (order as any).buyerUsername || (order as any).recipientName;
+    }
+  } catch (e: any) {
+    // Không bắt buộc phải có CSDL để tra cứu
+  }
 
-  return {
-    trackingNo,
-    status: '❓ Chưa ghi nhận hành trình',
-    carrier: carrier !== 'UNKNOWN' ? carrier : 'Vận chuyển',
-    steps: [],
-    success: false,
-    errorMessage: 'Không tìm thấy dữ liệu vận đơn.',
-  };
+  return result;
 }

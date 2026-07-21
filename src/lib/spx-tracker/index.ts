@@ -18,6 +18,11 @@ export interface WaybillTrackingResult {
   steps: TrackingStep[];
   success: boolean;
   errorMessage?: string;
+  orderSn?: string;
+  productName?: string;
+  quantity?: number;
+  totalAmount?: number;
+  customerName?: string;
 }
 
 // In-Memory Cache (Bộ nhớ đệm RAM 10 phút)
@@ -237,6 +242,24 @@ export async function trackMultipleSPXWaybills(
       );
       results.push(...batchResults);
     }
+
+    // Tự động làm giàu thông tin Đơn hàng từ CSDL (nếu khớp)
+    try {
+      const { findOrders } = await import('../database/index.ts');
+      for (const item of results) {
+        if (!item.productName) {
+          const orders = await findOrders(item.trackingNo);
+          if (orders && orders.length > 0) {
+            const o = orders[0];
+            item.orderSn = o.orderSn;
+            item.productName = o.productName;
+            item.quantity = o.quantity;
+            item.totalAmount = o.totalAmount;
+            item.customerName = (o as any).customerName || (o as any).buyerUsername || (o as any).recipientName;
+          }
+        }
+      }
+    } catch (e) {}
 
     return results;
   } catch (err: any) {
