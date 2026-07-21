@@ -589,6 +589,51 @@ export async function searchVouchersByProduct(keywordOrUrl: string) {
   });
 }
 
+/**
+ * Phân tích URL sản phẩm Shopee và chọn ra Voucher Tối Ưu Nhất (Giảm nhiều tiền nhất)
+ */
+export async function findBestVouchersForProductLink(productUrl: string) {
+  const cleanUrl = productUrl.trim().toLowerCase();
+  const now = new Date();
+
+  // 1. Tìm tất cả voucher còn hạn trong CSDL
+  const allVouchers = await prisma.voucher.findMany();
+
+  const validVouchers = allVouchers.filter((v) => !v.endTime || new Date(v.endTime) >= now);
+  if (validVouchers.length === 0) return null;
+
+  // 2. Sắp xếp ưu tiên mã giảm nhiều tiền nhất (discountAmountValue giảm từ cao xuống thấp)
+  validVouchers.sort((a, b) => {
+    if (b.discountAmountValue !== a.discountAmountValue) {
+      return b.discountAmountValue - a.discountAmountValue;
+    }
+    return b.score - a.score;
+  });
+
+  // 3. Phân loại mã phù hợp riêng shop hoặc mã toàn sàn ngon nhất
+  let matched = validVouchers.filter((v) => {
+    if (!v.shopName && !v.title) return false;
+    const sName = (v.shopName || '').toLowerCase();
+    const sTitle = (v.title || '').toLowerCase();
+    return cleanUrl.includes(sName) || cleanUrl.includes(sTitle);
+  });
+
+  if (matched.length === 0) {
+    matched = validVouchers; // Nếu không có mã riêng shop, lấy danh sách mã giảm sâu nhất toàn sàn
+  }
+
+  const bestVoucher = matched[0];
+  const runnerUp = matched.length > 1 ? matched[1] : null;
+  const thirdPlace = matched.length > 2 ? matched[2] : null;
+
+  return {
+    bestVoucher,
+    runnerUp,
+    thirdPlace,
+    totalAvailable: matched.length,
+  };
+}
+
 export function formatVoucherTelegramMessage(voucher: any): string {
   const code = voucher.voucherCode ? `<code>${voucher.voucherCode}</code>` : '<i>Mã tự động áp dụng khi lưu</i>';
   const endTimeStr = voucher.endTime ? new Date(voucher.endTime).toLocaleString('vi-VN') : 'Cho đến khi hết lượt';

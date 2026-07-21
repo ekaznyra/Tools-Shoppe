@@ -47,7 +47,7 @@ async function testVoucherScannerModule() {
 
   // 2. Test Add Shop Target & Scanning & Deduplication
   console.log('2️⃣ Testing Add Shop Target & Voucher Scanning...');
-  const shop = await addShopTarget('https://shopee.vn/tu_store', 'TEST_CHAT_ID');
+  const shop = await addShopTarget('https://shopee.vn/m/ma-giam-gia', 'TEST_CHAT_ID');
   console.log(`   • Added Shop: ${shop.shopName} (${shop.shopUrl})`);
 
   const rawList = await scanVouchersFromUrl(shop.shopUrl);
@@ -68,8 +68,8 @@ async function testVoucherScannerModule() {
   const hotList = await getHotVouchers(5);
   console.log(`   • Top HOT Vouchers Found: ${hotList.length}`);
 
-  const searchResults = await searchVouchersByProduct('TU_STORE');
-  console.log(`   • Keyword Search for "TU_STORE": Found ${searchResults.length} matching vouchers`);
+  const searchResults = await searchVouchersByProduct('Shopee');
+  console.log(`   • Keyword Search for "Shopee": Found ${searchResults.length} matching vouchers`);
   if (searchResults.length === 0) {
     throw new Error('❌ Test Keyword Search FAILED!');
   }
