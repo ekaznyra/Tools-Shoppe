@@ -8,6 +8,7 @@ export interface ShopeeOrderRaw {
   totalAmount: number;
   shippingCarrier?: string;
   shippingStatus?: string;
+  customerName?: string;
 }
 
 export interface ShopeeOrderRecord extends ShopeeOrderRaw {

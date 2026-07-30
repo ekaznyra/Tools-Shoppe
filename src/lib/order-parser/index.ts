@@ -143,6 +143,14 @@ export async function parseOrderList(
           .innerText({ timeout: 2000 })
           .catch(() => 'Đang vận chuyển');
 
+        const customerNameRaw = await card
+          .locator('[data-testid="customer-name"], .buyer-username, .customer-name, .buyer-name')
+          .first()
+          .innerText({ timeout: 2000 })
+          .catch(() => '');
+
+        const customerName = maskSensitiveData(customerNameRaw.trim());
+
         const parsedOrder: ShopeeOrderRaw = {
           orderSn: orderSn.trim(),
           orderStatus: orderStatus.trim(),
@@ -153,6 +161,7 @@ export async function parseOrderList(
           totalAmount: totalAmountParsed,
           shippingCarrier: shippingCarrier.trim(),
           shippingStatus: shippingStatus.trim(),
+          customerName,
         };
 
         orders.push(parsedOrder);

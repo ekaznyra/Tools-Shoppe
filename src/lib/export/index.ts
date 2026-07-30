@@ -34,6 +34,7 @@ export async function exportToExcel(
       { header: 'Tổng Tiền (VNĐ)', key: 'totalAmount', width: 18 },
       { header: 'Đơn Vị Vận Chuyển', key: 'shippingCarrier', width: 20 },
       { header: 'Trạng Thái Giao', key: 'shippingStatus', width: 20 },
+      { header: 'Người Nhận', key: 'customerName', width: 20 },
     ];
 
     worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFF' } };
@@ -154,6 +155,7 @@ export async function exportToCsv(
     'Tổng Tiền (VNĐ)',
     'Đơn Vị Vận Chuyển',
     'Trạng Thái Giao',
+    'Người Nhận',
   ];
 
   const rows = orders.map((o) => [
@@ -166,6 +168,7 @@ export async function exportToCsv(
     o.totalAmount,
     `"${o.shippingCarrier || ''}"`,
     `"${o.shippingStatus || ''}"`,
+    `"${o.customerName || ''}"`,
   ]);
 
   const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');

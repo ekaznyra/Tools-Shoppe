@@ -17,7 +17,7 @@ if not exist node_modules (
     call npm install
 )
 
-if not exist shopee_orders.db (
+if not exist prisma\shopee_orders.db (
     call npx prisma db push --skip-generate >nul 2>nul
 )
 

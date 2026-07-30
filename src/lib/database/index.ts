@@ -40,6 +40,7 @@ export async function saveOrdersToDatabase(orders: ShopeeOrderRaw[]): Promise<Sy
             totalAmount: order.totalAmount,
             shippingCarrier: order.shippingCarrier || '',
             shippingStatus: order.shippingStatus || '',
+            customerName: order.customerName || '',
             syncedAt: new Date(),
           },
           create: {
@@ -52,6 +53,7 @@ export async function saveOrdersToDatabase(orders: ShopeeOrderRaw[]): Promise<Sy
             totalAmount: order.totalAmount,
             shippingCarrier: order.shippingCarrier || '',
             shippingStatus: order.shippingStatus || '',
+            customerName: order.customerName || '',
           },
         });
         syncedCount++;
@@ -102,6 +104,7 @@ export async function findOrders(query?: string) {
             { orderSn: { contains: cleanQuery } },
             { sku: { contains: cleanQuery } },
             { productName: { contains: cleanQuery } },
+            { customerName: { contains: cleanQuery } },
           ],
         },
         orderBy: { syncedAt: 'desc' },

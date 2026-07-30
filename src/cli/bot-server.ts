@@ -814,6 +814,8 @@ async function startBotServer() {
             logger.error({ error: err.message }, 'Lỗi xử lý tin nhắn Telegram');
           });
         });
+      } else {
+        await new Promise((r) => setTimeout(r, 500));
       }
     } catch (e: any) {
       logger.error({ error: e.message }, 'Lỗi trong vòng lặp Telegram Bot');

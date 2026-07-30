@@ -13,7 +13,7 @@ while true; do
     npm install
   fi
 
-  if [ ! -f "shopee_orders.db" ]; then
+  if [ ! -f "prisma/shopee_orders.db" ]; then
     echo "[THONG BAO] Dang khoi tao CSDL..."
     npx prisma db push --skip-generate
   fi
