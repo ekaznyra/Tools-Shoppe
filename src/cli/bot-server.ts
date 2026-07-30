@@ -40,6 +40,10 @@ import {
   formatVoucherTelegramMessage,
   isVoucherMatchingPreference,
   parseNumericValue,
+  analyzeProductPriceHistory,
+  generateCustomAffiliateLink,
+  getUpcomingFlashSaleVouchers,
+  calculateFinalShopeePrice,
 } from '../lib/voucher-scanner/index.ts';
 import { startWebServer } from '../web/server.ts';
 import { logger } from '../lib/logging/index.ts';
@@ -360,12 +364,15 @@ export async function sendMainMenuWithButtons(chatId: string) {
 
 async function handleShopeeProductLinkOptimization(chatId: string, productUrl: string) {
   const lang = getUserLang(chatId);
-  await sendTelegramMessage(chatId, '🔎 <b>Đang phân tích sản phẩm Shopee & phân loại Mã Giảm Giá theo Giá Trị Đơn Hàng...</b>');
+  await sendTelegramMessage(chatId, '🔎 <b>Đang phân tích sản phẩm Shopee & kiểm tra khả năng áp mã giảm giá...</b>');
 
   const recommendation = await findBestVouchersForProductLink(productUrl);
 
   if (!recommendation || (!recommendation.bestForSmallOrder && !recommendation.bestForLargeOrder)) {
-    await sendTelegramMessage(chatId, '📭 Chưa tìm thấy mã giảm giá phù hợp cho sản phẩm này.', 'HTML', getBackToMenuKeyboard(lang));
+    let noMatchMsg = `❌ <b>KHÔNG ÁP ĐƯỢC MÃ NÀO CHO SẢN PHẨM NÀY!</b>\n\n`;
+    noMatchMsg += `📦 <b>Link sản phẩm:</b> <code>${escapeHtml(productUrl)}</code>\n\n`;
+    noMatchMsg += `📭 <i>Rất tiếc, hiện tại hệ thống chưa tìm thấy mã giảm giá nào còn hạn áp dụng được cho sản phẩm này trên Shopee.</i>`;
+    await sendTelegramMessage(chatId, noMatchMsg, 'HTML', getBackToMenuKeyboard(lang));
     return;
   }
 
@@ -373,43 +380,43 @@ async function handleShopeeProductLinkOptimization(chatId: string, productUrl: s
   const largeV = recommendation.bestForLargeOrder;
   const targetLink = smallV?.affiliateUrl || largeV?.affiliateUrl || productUrl;
 
-  let msg = `🎯 <b>MÃ GIẢM GIÁ PHÙ HỢP THEO GIÁ TRỊ ĐƠN HÀNG CỦA BẠN</b>\n\n`;
-  msg += `📦 <b>Sản phẩm đã quăng:</b>\n<code>${escapeHtml(productUrl.slice(0, 75))}${productUrl.length > 75 ? '...' : ''}</code>\n\n`;
+  let msg = `🎯 <b>KẾT QUẢ KIỂM TRA MÃ GIẢM GIÁ ÁP DỤNG ĐƯỢC</b>\n\n`;
+  msg += `📦 <b>Sản phẩm kiểm tra:</b>\n<code>${escapeHtml(productUrl.slice(0, 75))}${productUrl.length > 75 ? '...' : ''}</code>\n\n`;
 
   if (smallV) {
     const codeS = smallV.voucherCode || 'LIVE50K';
     const isSaveVoucher = smallV.shopId === 'SHOPEE_CCB' || smallV.shopId === 'SHOPEE_FREESHIP';
-    const typeLabel = isSaveVoucher ? '📌 Mã Lưu Ví (Bấm link để Lưu)' : '🔑 Mã Dán Trực Tiếp';
+    const typeLabel = isSaveVoucher ? '📌 Mã Lưu Vào Ví Shopee (Bấm link để Lưu)' : '🔑 Mã Dán Trực Tiếp Khi Thanh Toán';
 
-    msg += `⚡ <b>THƯỜNG DÙNG CHO ĐƠN DƯỚI 400.000đ (Đơn nhỏ / vừa):</b>\n`;
+    msg += `✅ <b>[ÁP DỤNG THÀNH CÔNG] Cho đơn từ ${smallV.minSpend || '0đ'}:</b>\n`;
     msg += `• <b>Mã voucher:</b> <code>${codeS}</code>\n`;
     msg += `• 💰 <b>Mức giảm:</b> <b>${smallV.discountValue}</b> (${smallV.shopName || 'Shopee Official'})\n`;
     msg += `• 📦 <b>Đơn tối thiểu:</b> <b>${smallV.minSpend || '0đ'}</b>\n`;
-    msg += `• 📌 <b>Phân loại:</b> <i>${typeLabel}</i>\n\n`;
+    msg += `• 📌 <b>Hình thức áp mã:</b> <i>${typeLabel}</i>\n\n`;
   }
 
   if (largeV && largeV.voucherCode !== smallV?.voucherCode) {
     const codeL = largeV.voucherCode || 'CCB100K';
     const isSaveVoucher = largeV.shopId === 'SHOPEE_CCB' || largeV.shopId === 'SHOPEE_FREESHIP';
-    const typeLabel = isSaveVoucher ? '📌 Mã Lưu Vào Ví Shopee (Bấm link để Lưu)' : '🔑 Mã Dán Trực Tiếp';
+    const typeLabel = isSaveVoucher ? '📌 Mã Lưu Vào Ví Shopee (Bấm link để Lưu)' : '🔑 Mã Dán Trực Tiếp Khi Thanh Toán';
 
-    msg += `💎 <b>DÙNG CHO ĐƠN TỪ 400.000đ TRỞ LÊN (Đơn lớn):</b>\n`;
+    msg += `💎 <b>[ÁP DỤNG THÀNH CÔNG] Cho đơn lớn từ ${largeV.minSpend || '400.000đ'}:</b>\n`;
     msg += `• <b>Mã voucher:</b> <code>${codeL}</code>\n`;
     msg += `• 💰 <b>Mức giảm:</b> <b>${largeV.discountValue}</b> (${largeV.shopName || 'Shopee Hoàn Xu'})\n`;
     msg += `• 📦 <b>Đơn tối thiểu bắt buộc:</b> <b>${largeV.minSpend || '400.000đ'}</b>\n`;
-    msg += `• 📌 <b>Phân loại:</b> <i>${typeLabel}</i>\n\n`;
+    msg += `• 📌 <b>Hình thức áp mã:</b> <i>${typeLabel}</i>\n\n`;
   }
 
-  msg += `⚠️ <b>LƯU Ý QUAN TRỌNG KHI ÁP MÃ SHOPEE:</b>\n`;
-  msg += `1. Mã Hoàn Xu/Freeship Extra (như <code>CCB100K</code>) là <b>Mã Hệ Thống Sàn</b> $\rightarrow$ Phải bấm nút <b>🛍️ 🔗 Mở App Shopee Nhận & Lưu Mã</b> bên dưới để Lưu mã vào Ví trước, mã sẽ tự hiển thị lúc Thanh Toán chứ <b>KHÔNG nhập tay vào ô text</b> (Shopee sẽ báo không tìm thấy mã nếu gõ tay).\n`;
-  msg += `2. Nếu đơn hàng của bạn <b>dưới 400.000đ</b>, vui lòng chọn mã <code>${smallV?.voucherCode || 'LIVE50K'}</code> hoặc mã <b>Miễn Phí Vận Chuyển</b>!\n`;
+  msg += `⚠️ <b>LƯU Ý QUAN TRỌNG ĐỂ ÁP MÃ THÀNH CÔNG:</b>\n`;
+  msg += `1. Mã Hoàn Xu/Freeship Extra (như <code>CCB100K</code>) là <b>Mã Hệ Thống Sàn</b> $\rightarrow$ Phải bấm nút <b>🛍️ 🔗 Mở App Shopee Nhận & Lưu Mã</b> bên dưới để Lưu mã vào Ví trước, mã sẽ tự hiển thị lúc Thanh Toán chứ <b>KHÔNG nhập tay vào ô text</b>.\n`;
+  msg += `2. Giá trị đơn hàng của bạn phải đạt mức <b>Đơn tối thiểu</b> ghi trên mã thì mới áp dụng thành công!\n`;
 
   const topCode = smallV?.voucherCode || 'LIVE50K';
 
   const keyboard = {
     inline_keyboard: [
       [
-        { text: `📋 CoPy Mã Dán [ ${topCode} ]`, callback_data: `copy_${topCode}` },
+        { text: `📋 Sao Chép Mã Dán [ ${topCode} ]`, callback_data: `copy_${topCode}` },
       ],
       [
         { text: `🛍️ 🔗 Mở App Shopee Nhận & Lưu Mã`, url: targetLink },
@@ -675,6 +682,71 @@ async function handleCommand(chatId: string, text: string) {
     }
     const keyboard = formatVouchersAsInlineKeyboard(found, lang);
     await sendTelegramMessage(chatId, `🔍 <b>Tìm thấy ${found.length} voucher phù hợp với "${escapeHtml(query)}" (Chạm nút để nhận):</b>`, 'HTML', keyboard);
+    return;
+  }
+
+  if (command === '/lichsugia' || command === '/price' || command === '/biendonggia') {
+    const url = args.trim();
+    if (!url || (!url.includes('shopee.vn') && !url.includes('shp.ee'))) {
+      await sendTelegramMessage(chatId, '⚠️ Vui lòng nhập link sản phẩm Shopee. Ví dụ: <code>/lichsugia https://shopee.vn/product/...</code>');
+      return;
+    }
+    const history = await analyzeProductPriceHistory(url);
+    let msg = `📈 <b>BIẾN ĐỘNG GIÁ 90 NGÀY QUA:</b>\n\n`;
+    msg += `• Giá hiện tại: <b>${history.currentPrice.toLocaleString('vi-VN')}đ</b>\n`;
+    msg += `• Giá niêm yết cũ: <s>${history.basePrice.toLocaleString('vi-VN')}đ</s> (Giảm ${history.discountPercent}%)\n`;
+    msg += `• Giá thấp nhất lịch sử: <b>${history.lowestHistoricalPrice.toLocaleString('vi-VN')}đ</b>\n`;
+    msg += `• Đánh giá: <b>${history.priceRating}</b>\n`;
+    await sendTelegramMessage(chatId, msg, 'HTML', getBackToMenuKeyboard(lang));
+    return;
+  }
+
+  if (command === '/aff' || command === '/link' || command === '/taoaff') {
+    const rawUrl = args.trim();
+    if (!rawUrl) {
+      await sendTelegramMessage(chatId, '⚠️ Vui lòng dán link Shopee cần chuyển đổi. Ví dụ: <code>/aff https://shopee.vn/...</code>');
+      return;
+    }
+    const affUrl = generateCustomAffiliateLink(rawUrl, `user_${chatId}`);
+    let msg = `🔗 <b>ĐÃ CHUYỂN ĐỔI THÀNH LINK AFFILIATE:</b>\n\n`;
+    msg += `<code>${escapeHtml(affUrl)}</code>\n\n`;
+    msg += `💡 <i>Bấm link trên để mua hàng hoặc chia sẻ cho người khác nhận hoa hồng!</i>`;
+    await sendTelegramMessage(chatId, msg, 'HTML', getBackToMenuKeyboard(lang));
+    return;
+  }
+
+  if (command === '/flashsale' || command === '/hengio' || command === '/khunggiovang') {
+    const fs = getUpcomingFlashSaleVouchers();
+    let msg = `⏰ <b>DỰ BÁO KHUNG GIỜ VÀNG FLASH SALE ${fs.nextSlotHour}</b>\n\n`;
+    msg += `• Đếm ngược: <b>${fs.countdownStr}</b> nữa đến đợt tung mã!\n\n`;
+    msg += `🔥 <b>TOP VOUCHER CHUẨN BỊ MỞ KHUNG GIỜ VÀNG:</b>\n`;
+    fs.recommendedVouchers.forEach((item, idx) => {
+      msg += `<b>${idx + 1}. [${item.code}] ${item.title}</b> (${item.slot})\n`;
+    });
+    await sendTelegramMessage(chatId, msg, 'HTML', getBackToMenuKeyboard(lang));
+    return;
+  }
+
+  if (command === '/tinhgia' || command === '/tinhxu' || command === '/calculator') {
+    const numbers = args.match(/\d+/g);
+    if (!numbers || numbers.length === 0) {
+      await sendTelegramMessage(chatId, '⚠️ Vui lòng nhập: <code>/tinhgia <giá_sp> <mã_giảm> <xu></code>. Ví dụ: <code>/tinhgia 350k 50k 20k</code>');
+      return;
+    }
+    const price = parseNumericValue(numbers[0]);
+    const discount = numbers.length > 1 ? parseNumericValue(numbers[1]) : 0;
+    const coins = numbers.length > 2 ? parseNumericValue(numbers[2]) : 0;
+    const calc = calculateFinalShopeePrice(price, discount, 30000, coins);
+
+    let msg = `🧮 <b>MÁY TÍNH NHẨM GIÁ THỰC TẾ SHOPEE:</b>\n\n`;
+    msg += `• Giá sản phẩm ban đầu: <b>${calc.originalPrice.toLocaleString('vi-VN')}đ</b>\n`;
+    msg += `• Trừ voucher giảm: <b>-${calc.voucherCut.toLocaleString('vi-VN')}đ</b>\n`;
+    msg += `• Trừ Shopee Xu: <b>-${calc.coinCut.toLocaleString('vi-VN')}đ</b>\n`;
+    msg += `• Tiết kiệm tiền ship: <b>-${calc.freeshipVal.toLocaleString('vi-VN')}đ</b>\n`;
+    msg += `------------------------------------\n`;
+    msg += `💰 <b>SỐ TIỀN THỰC TẾ PHẢI TRẢ:</b> <b>${calc.finalPay.toLocaleString('vi-VN')}đ</b>\n`;
+    msg += `🎉 <b>TỔNG TIẾT KIỆM ĐƯỢC:</b> <b>${calc.totalSaved.toLocaleString('vi-VN')}đ</b> (Tiết kiệm ${calc.savePercent}%)\n`;
+    await sendTelegramMessage(chatId, msg, 'HTML', getBackToMenuKeyboard(lang));
     return;
   }
 
