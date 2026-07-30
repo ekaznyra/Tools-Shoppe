@@ -6,8 +6,10 @@
   "main": "dist/cli/sync-orders.js",
   "scripts": {
     "build": "tsc",
+    "typecheck": "tsc --noEmit",
     "sync": "ts-node src/cli/sync-orders.ts",
     "bot": "ts-node src/cli/bot-server.ts",
+    "test:voucher": "ts-node src/cli/test-voucher-scanner.ts",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate"

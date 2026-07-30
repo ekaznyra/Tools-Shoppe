@@ -29,6 +29,17 @@ export interface WaybillTrackingResult {
 const memoryCache = new Map<string, { data: WaybillTrackingResult; timestamp: number }>();
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
+function cleanupCacheIfNeeded() {
+  if (memoryCache.size > 2000) {
+    const now = Date.now();
+    for (const [key, value] of memoryCache.entries()) {
+      if (now - value.timestamp > CACHE_TTL_MS) {
+        memoryCache.delete(key);
+      }
+    }
+  }
+}
+
 let globalBrowser: Browser | null = null;
 let globalContext: BrowserContext | null = null;
 
@@ -124,6 +135,7 @@ export async function trackSPXOnPage(page: any, trackingNo: string): Promise<Way
             steps,
             success: true,
           };
+          cleanupCacheIfNeeded();
           memoryCache.set(cleanTrackingNo, { data: result, timestamp: Date.now() });
           return result;
         }
@@ -215,6 +227,7 @@ export async function trackSPXOnPage(page: any, trackingNo: string): Promise<Way
         success: true,
       };
 
+      cleanupCacheIfNeeded();
       memoryCache.set(cleanTrackingNo, { data: result, timestamp: Date.now() });
       return result;
     }
@@ -297,6 +310,7 @@ export async function trackMultipleSPXWaybills(
             steps,
             success: true,
           };
+          cleanupCacheIfNeeded();
           memoryCache.set(code, { data: itemRes, timestamp: Date.now() });
           results.push(itemRes);
           continue;
@@ -322,6 +336,7 @@ export async function trackMultipleSPXWaybills(
         ],
         success: true,
       };
+      cleanupCacheIfNeeded();
       memoryCache.set(code, { data: itemRes, timestamp: Date.now() });
       results.push(itemRes);
       continue;

@@ -25,6 +25,17 @@ export function startWebServer(port: number = Number(PORT)) {
   const htmlPath = path.join(publicDir, 'index.html');
 
   const server = http.createServer(async (req, res) => {
+    // Thêm CORS Headers hỗ trợ gọi API từ bên ngoài
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+
     const rawUrl = req.url || '/';
     const parsedUrl = new URL(rawUrl, `http://localhost:${port}`);
     const pathname = parsedUrl.pathname;
@@ -288,6 +299,14 @@ export function startWebServer(port: number = Number(PORT)) {
     // 404 Route
     res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end('Endpoint không tồn tại.');
+  });
+
+  server.on('error', (err: any) => {
+    if (err.code === 'EADDRINUSE') {
+      logger.warn(`Cổng ${port} đang được sử dụng bởi tiến trình khác. Web server vẫn đang chạy.`);
+    } else {
+      logger.error({ error: err.message }, 'Lỗi khởi chạy Web Server');
+    }
   });
 
   server.listen(port, () => {
